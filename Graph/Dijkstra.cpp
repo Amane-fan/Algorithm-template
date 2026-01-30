@@ -1,16 +1,17 @@
-template <class T>
-vector<ll> dijkstra(const T &adj, int s) {
-    using pli = pair<ll, int>;
+constexpr i64 inf = numeric_limits<i64>::max() / 3;
+vector<i64> dijkstra(const vector<vector<array<int, 2>>> &adj, int s) {
     int n = int(adj.size()) - 1;
-    vector<ll> dis(n + 1, inf);
+    vector<i64> dis(n + 1, inf);
     dis[s] = 0;
-    vector<bool> vis(n + 1);
-    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    vector<int> vis(n + 1);
+    priority_queue<pair<i64, int>, vector<pair<i64, int>>, greater<>> pq;
     pq.push({0, s});
     while (!pq.empty()) {
         auto [_, u] = pq.top();
         pq.pop();
-        if (vis[u]) continue;
+        if (vis[u]) {
+            continue;
+        }
         vis[u] = true;
         for (auto &[w, v] : adj[u]) {
             if (vis[v] || dis[u] + w >= dis[v]) {
