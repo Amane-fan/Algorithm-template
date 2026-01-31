@@ -1,46 +1,23 @@
-struct Trie {
-    #define f(x, y) t[x].ch[y]
-    struct Node {
-        int cnt;
-        array<int,26> ch;
-        Node(): cnt(0), ch{} {}
-    };
-    vector<Node> t;
-    Trie() {
-        init();
+constexpr int N = 1e6;
+
+int trie[N][26];
+int tot = 0;
+
+void clear() {
+    for (int i = 0; i <= tot; i++) {
+        fill(trie[i], trie[i] + 26, 0);
     }
-    void init() {
-       newNode();
-    }
-    int newNode() {
-        t.push_back(Node());
-        return t.size() - 1;
-    }
-    int get(char c) {
-        return c - 'a';
-    }
-    void insert(const string &s) {
-        int n = s.size();
-        int p = 0;
-        for (int i = 0; i < n; i++) {
-            int u = get(s[i]);
-            if (f(p, u) == 0) {
-                int k = newNode();
-                f(p, u) = k;
-            }
-            p = f(p, u);
+    tot = 0;
+}
+
+void insert(const string &s) {
+    int n = s.size();
+    int p = 0;
+    for (int i = 0; i < n; i++) {
+        int &nxt = trie[p][s[i] - 'a'];
+        if (nxt == 0) {
+            nxt = ++tot;
         }
-        t[p].cnt++;
+        p = nxt;
     }
-    Node query(const string &s) {
-        int n = s.size();
-        int p = 0;
-        for (int i = 0; i < n; i++) {
-            int u = get(s[i]);
-            if (f(p, u) == 0) return Node();
-            p = f(p, u);
-        }
-        return t[p];
-    }
-    #undef f
-};
+}
