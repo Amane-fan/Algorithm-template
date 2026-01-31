@@ -5,9 +5,8 @@ struct RMQ {
     array<vector<T>, 20> f;
     F fun;
     RMQ() {}
-    RMQ(const vector<T> &a, F &&fun_): fun(fun_) {
-        this->a = a;
-        this->n = int(a.size()) - 1;
+    RMQ(const vector<T> &a_, F &&fun_): a(a_), fun(fun_) {
+        n = int(a.size()) - 1;
         f.fill(vector<T>(n + 1));
         for (int i = 1; i <= n; i++) {
             f[0][i] = a[i];
