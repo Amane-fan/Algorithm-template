@@ -949,16 +949,20 @@ for (int i = 2; i <= n; i++) {
 
 ## 扩展欧几里得
 
+对于 $ ax + by = c$ 的通解
+
+$ x = x_0 + k \frac{b}{g} $ 
+
+$ y =y_0 - k\frac{a}{g} $		
+
 ```c++
-template<class T>
-T exgcd(T a, T b, __int128 &x, __int128 &y) {
-    if (b == 0) {
-        x = 1, y = 0;
-        return a;
+template <class T>
+array<T, 3> exgcd(const T &a, const T &b) {
+    if (b == T(0)) {
+        return {a, T(1), T(0)};
     }
-    T gcd = exgcd(b, a % b, y, x);
-    y -= (a / b) * x;
-    return gcd;
+    auto [g, x, y] = exgcd(b, a % b);
+    return {g, y, x - a / b * y};
 }
 ```
 
@@ -1399,11 +1403,11 @@ std::vector<i64> factorize(i64 n) {
 ## 多项式
 
 ```c++
-constexpr ll mod = 998244353;
-constexpr ll G = 3;
+constexpr i64 mod = 998244353;
+constexpr i64 G = 3;
 
-ll power(ll a, ll b = mod - 2) {
-    ll res = 1;
+i64 power(i64 a, i64 b = mod - 2) {
+    i64 res = 1;
     while (b) {
         if (b & 1) {
             res = res * a % mod;
@@ -1414,10 +1418,10 @@ ll power(ll a, ll b = mod - 2) {
     return res;
 }
 
-template<ll mod, ll G>
+template<i64 mod, i64 G>
 struct PolyNTT {
     // NTT 整数模意义下的多项式乘法
-    static void ntt(vector<ll>& a, bool invert) {
+    static void ntt(vector<i64>& a, bool invert) {
         int n = a.size();
         vector<int> rev(n);
         for (int i = 0; i < n; i++) {
@@ -1425,13 +1429,13 @@ struct PolyNTT {
             if (i < rev[i]) swap(a[i], a[rev[i]]);
         }
         for (int len = 2; len <= n; len <<= 1) {
-            ll wlen = power(G, (mod - 1) / len);
+            i64 wlen = power(G, (mod - 1) / len);
             if (invert) wlen = power(wlen);
             for (int i = 0; i < n; i += len) {
-                ll w = 1;
+                i64 w = 1;
                 for (int j = 0; j < len / 2; j++) {
-                    ll u = a[i + j];
-                    ll v = a[i + j + len / 2] * w % mod;
+                    i64 u = a[i + j];
+                    i64 v = a[i + j + len / 2] * w % mod;
                     a[i + j] = (u + v) % mod;
                     a[i + j + len / 2] = (u - v + mod) % mod;
                     w = w * wlen % mod;
@@ -1439,23 +1443,23 @@ struct PolyNTT {
             }
         }
         if (invert) {
-            ll inv_n = power(n);
-            for (ll &x : a) x = x * inv_n % mod;
+            i64 inv_n = power(n);
+            for (i64 &x : a) x = x * inv_n % mod;
         }
     }
  
     // FFT 通用多项式乘法 (实现为 NTT)
-    static void fft(vector<ll>& a, bool invert) {
+    static void fft(vector<i64>& a, bool invert) {
         ntt(a, invert);
     }
 
     // FWT 子集卷积 / 集合运算
-    static void fwt(vector<ll>& a, bool invert) {
+    static void fwt(vector<i64>& a, bool invert) {
         int n = a.size();
         for (int len = 1; len < n; len <<= 1) {
             for (int i = 0; i < n; i++) {
                 if (i & len) continue;
-                ll x = a[i], y = a[i + len];
+                i64 x = a[i], y = a[i + len];
                 if (invert) {
                     // IFWT for XOR
                     a[i] = (x + y) % mod * power(2) % mod;
@@ -1470,7 +1474,7 @@ struct PolyNTT {
     }
  
     // 多项式加法
-    static vector<ll> add(vector<ll> a, vector<ll> b) {
+    static vector<i64> add(vector<i64> a, vector<i64> b) {
         int n = max(a.size(), b.size());
         a.resize(n);
         b.resize(n);
@@ -1481,7 +1485,7 @@ struct PolyNTT {
     }
  
     // 多项式减法
-    static vector<ll> sub(vector<ll> a, vector<ll> b) {
+    static vector<i64> sub(vector<i64> a, vector<i64> b) {
         int n = max(a.size(), b.size());
         a.resize(n);
         b.resize(n);
@@ -1492,7 +1496,7 @@ struct PolyNTT {
     }
  
     // 多项式乘法
-    static vector<ll> multiply(vector<ll> a, vector<ll> b) {
+    static vector<i64> multiply(vector<i64> a, vector<i64> b) {
         if (a.empty() || b.empty()) return {};
         int res_deg = (int)a.size() + (int)b.size() - 2;
         int sz = 1;
@@ -1508,32 +1512,32 @@ struct PolyNTT {
     }
  
     // 多项式除法（返回商）
-    static vector<ll> divide(const vector<ll>& a, const vector<ll>& b) {
+    static vector<i64> divide(const vector<i64>& a, const vector<i64>& b) {
         int n = a.size(), m = b.size();
         if (n < m) return {0};
-        vector<ll> ra = a;
-        vector<ll> rb = b;
+        vector<i64> ra = a;
+        vector<i64> rb = b;
         reverse(ra.begin(), ra.end());
         reverse(rb.begin(), rb.end());
-        vector<ll> rb_inv;
+        vector<i64> rb_inv;
         poly_inv(rb, rb_inv, n - m + 1);
-        vector<ll> q = multiply(ra, rb_inv);
+        vector<i64> q = multiply(ra, rb_inv);
         q.resize(n - m + 1);
         reverse(q.begin(), q.end());
         return q;
     }
  
     // 多项式模除（返回余数）
-    static vector<ll> Mod(const vector<ll>& a, const vector<ll>& b) {
+    static vector<i64> Mod(const vector<i64>& a, const vector<i64>& b) {
         if (a.size() < b.size()) return a;
-        vector<ll> q = divide(a, b);
-        vector<ll> r = sub(a, multiply(q, b));
+        vector<i64> q = divide(a, b);
+        vector<i64> r = sub(a, multiply(q, b));
         r.resize(min((int)r.size(), (int)b.size() - 1));
         return r;
     }
  
     // 多项式取逆，递归构造
-    static void poly_inv(const vector<ll>& a, vector<ll>& b, int deg) {
+    static void poly_inv(const vector<i64>& a, vector<i64>& b, int deg) {
         if (deg == 1) {
             b.assign(1, power(a[0]));
             return;
@@ -1541,7 +1545,7 @@ struct PolyNTT {
         poly_inv(a, b, (deg + 1) / 2);
         int sz = 1;
         while (sz < 2 * deg) sz <<= 1;
-        vector<ll> a_slice(a.begin(), a.begin() + min((int)a.size(), deg));
+        vector<i64> a_slice(a.begin(), a.begin() + min((int)a.size(), deg));
         a_slice.resize(sz);
         b.resize(sz);
         ntt(a_slice, false);
@@ -1554,19 +1558,19 @@ struct PolyNTT {
     }
  
     // 多项式求导
-    static vector<ll> derivative(const vector<ll>& a) {
+    static vector<i64> derivative(const vector<i64>& a) {
         int n = a.size();
         if (n <= 1) return {};
-        vector<ll> res(n - 1);
+        vector<i64> res(n - 1);
         for (int i = 1; i < n; i++) res[i - 1] = a[i] * i % mod;
         return res;
     }
  
     // 多项式积分
-    static vector<ll> integral(const vector<ll>& a) {
+    static vector<i64> integral(const vector<i64>& a) {
         int n = a.size();
-        vector<ll> res(n + 1);
-        vector<ll> inv(n + 2);
+        vector<i64> res(n + 1);
+        vector<i64> inv(n + 2);
         inv[1] = 1;
         for (int i = 2; i <= n + 1; i++) inv[i] = mod - (mod / i) * inv[mod % i] % mod;
         for (int i = 0; i < n; i++) res[i + 1] = a[i] * inv[i + 1] % mod;
@@ -1574,27 +1578,27 @@ struct PolyNTT {
     }
  
     // 多项式对数
-    static void ln(const vector<ll>& a, vector<ll>& b, int deg) {
-        vector<ll> a_der = derivative(a);
-        vector<ll> a_inv;
+    static void ln(const vector<i64>& a, vector<i64>& b, int deg) {
+        vector<i64> a_der = derivative(a);
+        vector<i64> a_inv;
         poly_inv(a, a_inv, deg);
-        vector<ll> t = multiply(a_der, a_inv);
+        vector<i64> t = multiply(a_der, a_inv);
         t.resize(deg - 1);
         b = integral(t);
         b.resize(deg);
     }
  
     // 多项式指数
-    static void exp(const vector<ll>& a, vector<ll>& b, int deg) {
+    static void exp(const vector<i64>& a, vector<i64>& b, int deg) {
         if (deg == 1) {
             b.assign(1, 1);
             return;
         }
         exp(a, b, (deg + 1) / 2);
         b.resize(deg);
-        vector<ll> ln_b;
+        vector<i64> ln_b;
         ln(b, ln_b, deg);
-        vector<ll> a_slice(a.begin(), a.begin() + min((int)a.size(), deg));
+        vector<i64> a_slice(a.begin(), a.begin() + min((int)a.size(), deg));
         a_slice.resize(deg, 0);
         for (int i = 0; i < deg; i++) {
             ln_b[i] = (a_slice[i] - ln_b[i] + mod) % mod;
@@ -1605,7 +1609,7 @@ struct PolyNTT {
     }
  
     // 多点求值
-    static void build_eval_tree(vector<vector<ll>>& tree, const vector<ll>& xs, int u, int l, int r) {
+    static void build_eval_tree(vector<vector<i64>>& tree, const vector<i64>& xs, int u, int l, int r) {
         if (r - l == 1) {
             tree[u] = {(mod - xs[l]) % mod, 1};
         } else {
@@ -1616,12 +1620,12 @@ struct PolyNTT {
         }
     }
  
-    static void fast_eval_rec(const vector<ll>& f, const vector<vector<ll>>& tree, vector<ll>& res, int u, int l, int r) {
+    static void fast_eval_rec(const vector<i64>& f, const vector<vector<i64>>& tree, vector<i64>& res, int u, int l, int r) {
         if (f.size() < 256) { // 小范围暴力求值优化
             for (int i = l; i < r; ++i) {
-                ll x = res[i];
-                ll y = 0, p = 1;
-                for (ll coeff : f) {
+                i64 x = res[i];
+                i64 y = 0, p = 1;
+                for (i64 coeff : f) {
                     y = (y + coeff * p) % mod;
                     p = p * x % mod;
                 }
@@ -1634,43 +1638,43 @@ struct PolyNTT {
             return;
         }
         int m = (l + r) / 2;
-        vector<ll> rem_l = Mod(f, tree[2 * u]);
-        vector<ll> rem_r = Mod(f, tree[2 * u + 1]);
+        vector<i64> rem_l = Mod(f, tree[2 * u]);
+        vector<i64> rem_r = Mod(f, tree[2 * u + 1]);
         fast_eval_rec(rem_l, tree, res, 2 * u, l, m);
         fast_eval_rec(rem_r, tree, res, 2 * u + 1, m, r);
     }
  
-    static vector<ll> fast_eval(const vector<ll>& f, const vector<ll>& xs) {
+    static vector<i64> fast_eval(const vector<i64>& f, const vector<i64>& xs) {
         int n = xs.size();
         if (n == 0) return {};
-        vector<vector<ll>> tree(4 * n);
+        vector<vector<i64>> tree(4 * n);
         build_eval_tree(tree, xs, 1, 0, n);
-        vector<ll> res = xs;
+        vector<i64> res = xs;
         fast_eval_rec(f, tree, res, 1, 0, n);
         return res;
     }
  
     // 快速插值
-    static vector<ll> interpolate(const vector<ll>& xs, const vector<ll>& ys) {
+    static vector<i64> interpolate(const vector<i64>& xs, const vector<i64>& ys) {
         int n = xs.size();
         if (n == 0) return {};
-        vector<vector<ll>> tree(4 * n);
+        vector<vector<i64>> tree(4 * n);
         build_eval_tree(tree, xs, 1, 0, n);
-        vector<ll> all_poly = tree[1];
-        vector<ll> der = derivative(all_poly);
-        vector<ll> val = fast_eval(der, xs);
-        vector<ll> weights(n);
+        vector<i64> all_poly = tree[1];
+        vector<i64> der = derivative(all_poly);
+        vector<i64> val = fast_eval(der, xs);
+        vector<i64> weights(n);
         for (int i = 0; i < n; i++) {
             weights[i] = ys[i] * power(val[i]) % mod;
         }
  
-        function<vector<ll>(int, int, int)> solve = [&](int u, int l, int r) -> vector<ll> {
+        function<vector<i64>(int, int, int)> solve = [&](int u, int l, int r) -> vector<i64> {
             if (r - l == 1) {
                 return {weights[l]};
             }
             int m = (l + r) / 2;
-            vector<ll> left = solve(2 * u, l, m);
-            vector<ll> right = solve(2 * u + 1, m, r);
+            vector<i64> left = solve(2 * u, l, m);
+            vector<i64> right = solve(2 * u + 1, m, r);
             return add(multiply(left, tree[2 * u + 1]), multiply(right, tree[2 * u]));
         };
  
@@ -1679,7 +1683,7 @@ struct PolyNTT {
 };
 
 using Poly = PolyNTT<mod, G>;
-using poly = vector<ll>;
+using poly = vector<i64>;
 ```
 
 ## FastGCD
@@ -1765,6 +1769,32 @@ struct FastGCD {
         return g;
     }
 };
+```
+
+## 上下取整
+
+```c++
+template <class T>
+T floor_div(const T &a, const T &b) {
+    assert(b != 0);
+    T q = a / b;
+    T r = a % b;
+    if (r != 0 && ((r > 0) != (b > 0))) {
+        --q;
+    }
+    return q;
+}
+ 
+template <class T>
+T ceil_div(const T &a, const T &b) {
+    assert(b != 0);
+    T q = a / b;
+    T r = a % b;
+    if (r != 0 && ((r > 0) == (b > 0))) {
+        ++q;
+    }
+    return q;
+}
 ```
 
 
