@@ -819,21 +819,20 @@ struct LinearBasis {
 ## 组合数（自动扩容）
 
 ```c++
-ll power(ll a, ll b, const int m) {
-    ll res = 1;
+constexpr int mod = 1e9 + 7;
+i64 power(i64 a, i64 b) {
+    i64 res = 1;
     while (b) {
-        if (b & 1) res = res * a % m;
+        if (b & 1) res = res * a % mod;
         b >>= 1;
-        a = a * a % m;
+        a = a * a % mod;
     }
     return res;
 }
 
-constexpr int mod = 1e9 + 7;
-
 struct Comb {
     int n;
-    vector<ll> _fac, _infac, _inv;
+    vector<i64> _fac, _infac, _inv;
     Comb(): n{0}, _fac{1}, _infac{1}, _inv{0} {}
     Comb(int m): Comb() {
         init(m);
@@ -853,19 +852,19 @@ struct Comb {
         }
         n = m;
     }
-    ll fac(int m) {
+    i64 fac(int m) {
         if (m > n) init(m * 2);
         return _fac[m];
     }
-    ll infac(int m) {
+    i64 infac(int m) {
         if (m > n) init(m * 2);
         return _infac[m];
     }
-    ll inv(int m) {
+    i64 inv(int m) {
         if (m > n) init(m * 2);
         return _inv[m];
     }
-    ll binom(int a, int b) {
+    i64 binom(int a, int b) {
         if (a < b || b < 0) return 0ll;
         return fac(a) * infac(a - b) % mod * infac(b) % mod;
     }
@@ -876,8 +875,8 @@ struct Comb {
 
 ```c++
 constexpr int mod = 998244353;
-ll power(ll a, ll b) {
-    ll res = 1;
+i64 power(i64 a, i64 b) {
+    i64 res = 1;
     while (b) {
         if (b & 1) {
             res = res * a % mod;

@@ -212,5 +212,5 @@ int MInt<0>::Mod = 998244353;
 template<int V, int P>
 constexpr MInt<P> CInv = MInt<P>(V).inv();
 
-constexpr int mod = 1e9 + 7;
+constexpr int mod = 998244353;
 using Z = MInt<mod>;

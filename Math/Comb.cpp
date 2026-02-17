@@ -9,7 +9,6 @@ i64 power(i64 a, i64 b) {
     return res;
 }
 
-
 struct Comb {
     int n;
     vector<i64> _fac, _infac, _inv;
