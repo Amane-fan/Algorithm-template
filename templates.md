@@ -2064,26 +2064,24 @@ vector<int> manacher(string s) {
 ## Dijkstra
 > 注意需要给出起点s，vis数组大小需根据具体情况开，adj数组需要边权放第一个
 ```c++
-template <class T>
-vector<ll> dijkstra(const T &adj, int s) {
-    using pli = pair<ll, int>;
+constexpr i64 inf = numeric_limits<i64>::max() / 3;
+vector<i64> dijkstra(const vector<vector<array<int, 2>>> &adj, int s) {
     int n = int(adj.size()) - 1;
-    vector<ll> dis(n + 1, inf);
+    vector<i64> dis(n + 1, inf);
     dis[s] = 0;
-    vector<bool> vis(n + 1);
-    priority_queue<pli, vector<pli>, greater<pli>> pq;
+    priority_queue<pair<i64, int>, vector<pair<i64, int>>, greater<>> pq;
     pq.push({0, s});
     while (!pq.empty()) {
-        auto [_, u] = pq.top();
+        auto [d, u] = pq.top();
         pq.pop();
-        if (vis[u]) continue;
-        vis[u] = true;
-        for (auto &[w, v] : adj[u]) {
-            if (vis[v] || dis[u] + w >= dis[v]) {
-                continue;
+        if (d != dis[u]) {
+        	continue;
+        }
+        for (auto [w, v] : adj[u]) {
+            if (dis[u] + w < dis[v]) {
+	            dis[v] = dis[u] + w;
+	            pq.push({dis[v], v});
             }
-            dis[v] = dis[u] + w;
-            pq.push({dis[v], v});
         }
     }
     return dis;
