@@ -1,11 +1,11 @@
 mt19937_64 rnd(chrono::steady_clock::now().time_since_epoch().count());
-const ull mask = rnd();
+const u64 mask = rnd();
 struct TreeHash {
     int n;
-    vector<ull> h, rt;
+    vector<u64> h, rt;
     vector<vector<int>> adj;
     TreeHash(int N): n(N), adj(N + 1), h(N + 1), rt(N + 1) {}
-    static ull shift(ull x) {
+    static u64 shift(u64 x) {
         x ^= mask;
         x ^= x << 13;
         x ^= x >> 7;

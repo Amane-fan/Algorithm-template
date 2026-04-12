@@ -1,7 +1,7 @@
-constexpr ll inf = 1e18;
-vector<ll> spfa(const vector<vector<array<int, 2>>> &adj, int s) {
+constexpr i64 inf = 1e18;
+vector<i64> spfa(const vector<vector<array<int, 2>>> &adj, int s) {
     int n = adj.size() - 1;
-    vector<ll> dis(n + 1, inf);
+    vector<i64> dis(n + 1, inf);
     vector<int> cnt(n + 1);
     vector<bool> vis(n + 1);
     dis[s] = 0;

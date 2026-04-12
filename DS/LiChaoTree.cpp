@@ -1,4 +1,4 @@
-constexpr ll inf = 2e18;
+constexpr i64 inf = 2e18;
 template <class T>
 struct LiChaoTree {
 	struct Line {

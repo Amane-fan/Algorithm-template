@@ -101,8 +101,6 @@ struct Fenwick {
 ```c++
 template <class Info>
 struct SegmentTree {
-    #define ls(x) (x << 1)
-    #define rs(x) (x << 1 | 1)
     int n;
     vector<Info> info;
     SegmentTree(): n(0) {}
@@ -120,26 +118,26 @@ struct SegmentTree {
                 info[id] = a[l];
                 return;
             }
-            int mid = l + r >> 1;
-            self(self, ls(id), l, mid);
-            self(self, rs(id), mid + 1, r);
+            int mid = (l + r) >> 1;
+            self(self, id * 2, l, mid);
+            self(self, id * 2 + 1, mid + 1, r);
             pushUp(id);
         };
         build(build, 1, 1, n);
     }
     void pushUp(int id) {
-        info[id] = info[ls(id)] + info[rs(id)];
+        info[id] = info[id * 2] + info[id * 2 + 1];
     }
     void modify(int id, int l, int r, int x, const Info &v) {
         if (l == r) {
             info[id] = v;
             return;
         }
-        int mid = l + r >> 1;
+        int mid = (l + r) >> 1;
         if (x <= mid){
-            modify(ls(id), l, mid, x, v);
+            modify(id * 2, l, mid, x, v);
         } else {
-            modify(rs(id), mid + 1, r, x, v);
+            modify(id * 2 + 1, mid + 1, r, x, v);
         }
         pushUp(id);
     }
@@ -153,8 +151,8 @@ struct SegmentTree {
         if (x <= l && y >= r) {
             return info[id];
         }
-        int mid = l + r >> 1;
-        return rangeQuery(ls(id), l, mid, x, y) + rangeQuery(rs(id), mid + 1, r, x, y);
+        int mid = (l + r) >> 1;
+        return rangeQuery(id * 2, l, mid, x, y) + rangeQuery(id * 2 + 1, mid + 1, r, x, y);
     }
     Info rangeQuery(int l, int r) {
         return rangeQuery(1, 1, n, l, r);
@@ -170,10 +168,10 @@ struct SegmentTree {
         if (l == r) {
             return l;
         }
-        int mid = l + r >> 1;
-        int res = findFirst(ls(id), l, mid, x, y, pred);
+        int mid = (l + r) >> 1;
+        int res = findFirst(id * 2, l, mid, x, y, pred);
         if (res == -1) {
-            res = findFirst(rs(id), mid + 1, r, x, y, pred);
+            res = findFirst(id * 2 + 1, mid + 1, r, x, y, pred);
         }
         return res;
     }
@@ -192,10 +190,10 @@ struct SegmentTree {
         if (l == r) {
             return l;
         }
-        int mid = l + r >> 1;
-        int res = findLast(rs(id), mid + 1, r, x, y, pred);
+        int mid = (l + r) >> 1;
+        int res = findLast(id * 2 + 1, mid + 1, r, x, y, pred);
         if (res == -1) {
-            res = findLast(ls(id), l, mid, x, y, pred);
+            res = findLast(id * 2, l, mid, x, y, pred);
         }
         return res;
     }
@@ -203,14 +201,10 @@ struct SegmentTree {
     int findLast(int l, int r, F &&pred) {
         return findLast(1, 1, n, l, r, pred);
     }
-    #undef ls
-    #undef rs
 };
 
 template <class Info, class Tag>
 struct LazySegmentTree {
-    #define ls(x) (x << 1)
-    #define rs(x) (x << 1 | 1)
     int n;
     vector<Info> info;
     vector<Tag> tag;
@@ -230,9 +224,9 @@ struct LazySegmentTree {
                 info[id] = a[l];
                 return;
             }
-            int mid = l + r >> 1;
-            self(self, ls(id), l, mid);
-            self(self, rs(id), mid + 1, r);
+            int mid = (l + r) >> 1;
+            self(self, id * 2, l, mid);
+            self(self, id * 2 + 1, mid + 1, r);
             pushUp(id);
         };
         build(build, 1, 1, n);
@@ -242,24 +236,24 @@ struct LazySegmentTree {
         tag[id].apply(t);
     }
     void pushDown(int id) {
-        apply(ls(id), tag[id]);
-        apply(rs(id), tag[id]);
+        apply(id * 2, tag[id]);
+        apply(id * 2 + 1, tag[id]);
         tag[id] = Tag();
     }
     void pushUp(int id) {
-        info[id] = info[ls(id)] + info[rs(id)];
+        info[id] = info[id * 2] + info[id * 2 + 1];
     }
     void modify(int id, int l, int r, int x, const Info &v) {
         if (l == r) {
             info[id] = v;
             return;
         }
-        int mid = l + r >> 1;
+        int mid = (l + r) >> 1;
         pushDown(id);
         if (x <= mid){
-            modify(ls(id), l, mid, x, v);
+            modify(id * 2, l, mid, x, v);
         } else {
-            modify(rs(id), mid + 1, r, x, v);
+            modify(id * 2 + 1, mid + 1, r, x, v);
         }
         pushUp(id);
     }
@@ -274,8 +268,8 @@ struct LazySegmentTree {
             return info[id];
         }
         pushDown(id);
-        int mid = l + r >> 1;
-        return rangeQuery(ls(id), l, mid, x, y) + rangeQuery(rs(id), mid + 1, r, x, y);
+        int mid = (l + r) >> 1;
+        return rangeQuery(id * 2, l, mid, x, y) + rangeQuery(id * 2 + 1, mid + 1, r, x, y);
     }
     Info rangeQuery(int l, int r) {
         return rangeQuery(1, 1, n, l, r);
@@ -289,9 +283,9 @@ struct LazySegmentTree {
             return;
         }
         pushDown(id);
-        int mid = l + r >> 1;
-        rangeApply(ls(id), l, mid, x, y, t);
-        rangeApply(rs(id), mid + 1, r, x, y, t);
+        int mid = (l + r) >> 1;
+        rangeApply(id * 2, l, mid, x, y, t);
+        rangeApply(id * 2 + 1, mid + 1, r, x, y, t);
         pushUp(id);
     }
     void rangeApply(int l, int r, const Tag &t) {
@@ -309,10 +303,10 @@ struct LazySegmentTree {
             return l;
         }
         pushDown(id);
-        int mid = l + r >> 1;
-        int res = findFirst(ls(id), l, mid, x, y, pred);
+        int mid = (l + r) >> 1;
+        int res = findFirst(id * 2, l, mid, x, y, pred);
         if (res == -1) {
-            res = findFirst(rs(id), mid + 1, r, x, y, pred);
+            res = findFirst(id * 2 + 1, mid + 1, r, x, y, pred);
         }
         return res;
     }
@@ -332,10 +326,10 @@ struct LazySegmentTree {
             return l;
         }
         pushDown(id);
-        int mid = l + r >> 1;
-        int res = findLast(rs(id), mid + 1, r, x, y, pred);
+        int mid = (l + r) >> 1;
+        int res = findLast(id * 2 + 1, mid + 1, r, x, y, pred);
         if (res == -1) {
-            res = findLast(ls(id), l, mid, x, y, pred);
+            res = findLast(id * 2, l, mid, x, y, pred);
         }
         return res;
     }
@@ -343,8 +337,6 @@ struct LazySegmentTree {
     int findLast(int l, int r, F &&pred) {
         return findLast(1, 1, n, l, r, pred);
     }
-    #undef ls
-    #undef rs
 };
 
 ```
@@ -356,7 +348,7 @@ struct LazySegmentTree {
 > 可以查询若干一次函数的最大值，弱需要查询最小值，则将一次函数的两个参数取相反数传入，最后查询最大值的相反数即可
 
 ```c++
-constexpr ll inf = 2e18;
+constexpr i64 inf = 2e18;
 template <class T>
 struct LiChaoTree {
 	struct Line {
@@ -438,11 +430,12 @@ struct LiChaoTree {
 > 一定注意sp数组要从1索引开始！！！
 
 ```c++
-auto sp = a;
-sort(sp.begin() + 1, sp.end());
-sp.erase(unique(sp.begin() + 1, sp.end()), sp.end());
-for (int i = 1; i <= n; i++) {
-	a[i] = lower_bound(sp.begin() + 1, sp.end(), a[i]) - sp.begin();
+template <class T>
+vector<T> sparse(const vector<T> &a, int offset) {
+    auto sp = a;
+    sort(sp.begin() + offset, sp.end());
+    sp.erase(unique(sp.begin() + offset, sp.end()), sp.end());
+    return sp;
 }
 ```
 
@@ -457,9 +450,8 @@ struct RMQ {
     array<vector<T>, 20> f;
     F fun;
     RMQ() {}
-    RMQ(const vector<T> &a, F &&fun_): fun(fun_) {
-        this->a = a;
-        this->n = int(a.size()) - 1;
+    RMQ(const vector<T> &a_, F &&fun_): a(a_), fun(fun_) {
+        n = int(a.size()) - 1;
         f.fill(vector<T>(n + 1));
         for (int i = 1; i <= n; i++) {
             f[0][i] = a[i];
