@@ -912,7 +912,7 @@ void Sieve() {
         }
 
         for (auto &p : prime) {
-            if (p * i > N) {
+            if (1LLp * i > N) {
                 break;
             }
             minp[p * i] = p;
