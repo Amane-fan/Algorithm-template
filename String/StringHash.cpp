@@ -1,6 +1,6 @@
 constexpr u64 mod = (1ull << 61) - 1;
 mt19937_64 rnd(chrono::steady_clock::now().time_since_epoch().count());
-uniform_int_distribution<u64> dist(mod / 2, mod - 1);
+uniform_int_distribution<u64> dist(256, mod - 2);
 const u64 base = dist(rnd);
 
 struct StringHash {
