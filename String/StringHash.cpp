@@ -1,5 +1,5 @@
 constexpr u64 mod = (1ull << 61) - 1;
-mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
+mt19937_64 rnd(chrono::steady_clock::now().time_since_epoch().count());
 uniform_int_distribution<u64> dist(mod / 2, mod - 1);
 const u64 base = dist(rnd);
 
