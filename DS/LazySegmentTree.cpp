@@ -135,7 +135,7 @@ struct LazySegmentTree {
 };
 
 struct Tag {
-    bool status;
+    bool status = false;
 
     void apply(const Tag &t) {
         if (!t.status) {
@@ -150,6 +150,7 @@ struct Tag {
 };
 
 struct Info {
+    bool status = false;
     
     void apply(const Tag &t) {
         if (!t.status) {
@@ -159,7 +160,16 @@ struct Info {
     }
 
     friend Info operator+(const Info &a, const Info &b) {
-        
+        if (!a.status) {
+            return b;
+        }
+        if (!b.status) {
+            return a;
+        }
+        Info c;
+        c.status = true;
+
+        return c;
     }
 
 };

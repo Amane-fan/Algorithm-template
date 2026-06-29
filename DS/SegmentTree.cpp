@@ -103,9 +103,19 @@ struct SegmentTree {
 };
 
 struct Info {
+    bool status = false;
 
-};
+    friend Info operator+(const Info &a, const Info &b) {
+        if (!a.status) {
+            return b;
+        }
+        if (!b.status) {
+            return a;
+        }
+        Info c;
+        c.status = true;
 
-Info operator+(const Info &a, const Info &b) {
+        return c;
+    }
     
-}
+};
