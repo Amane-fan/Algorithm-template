@@ -133,3 +133,33 @@ struct LazySegmentTree {
         return findLast(1, 1, n, l, r, pred);
     }
 };
+
+struct Tag {
+    bool status;
+
+    void apply(const Tag &t) {
+        if (!t.status) {
+            return;
+        }
+        if (!status) {
+            *this = t;
+            return;
+        }
+
+    }
+};
+
+struct Info {
+    
+    void apply(const Tag &t) {
+        if (!t.status) {
+            return;
+        }
+        
+    }
+
+    friend Info operator+(const Info &a, const Info &b) {
+        
+    }
+
+};

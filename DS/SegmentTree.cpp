@@ -101,3 +101,11 @@ struct SegmentTree {
         return findLast(1, 1, n, l, r, pred);
     }
 };
+
+struct Info {
+
+};
+
+Info operator+(const Info &a, const Info &b) {
+    
+}
