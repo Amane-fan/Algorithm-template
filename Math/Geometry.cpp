@@ -38,6 +38,15 @@ std::istream &operator>>(std::istream &is, Point<T> &p) {
 }
 
 template <class T>
+bool equal(const T &x, const T &y) {
+    if constexpr (is_floating_point_v<T>) {
+        return fabs(x - y) < eps;
+    } else {
+        return x == y;
+    }
+}
+
+template <class T>
 T dot(const Point<T> &a, const Point<T> &b) {
     return a.x * b.x + a.y * b.y;
 }
@@ -96,15 +105,6 @@ double distancePS(const Point<T> &p, const Line<T> &l) {
 template <class T>
 Point<T> lineIntersection(const Line<T> &l1, const Line<T> &l2) {
     return l1.a + (l1.b - l1.a) * cross(l2.a - l1.a, l2.b - l2.a) / cross(l2.b - l2.a, l1.b - l1.a);
-}
-
-template <class T>
-bool equal(const T &x, const T &y) {
-    if constexpr (is_floating_point_v<T>) {
-        return fabs(x - y) < eps;
-    } else {
-        return x == y;
-    }
 }
 
 template <class T>
