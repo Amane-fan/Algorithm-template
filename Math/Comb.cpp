@@ -1,4 +1,4 @@
-constexpr int mod = 1e9 + 7;
+constexpr int mod = 998244353;
 i64 power(i64 a, i64 b) {
     i64 res = 1;
     while (b) {
@@ -24,7 +24,7 @@ struct Comb {
         for (int i = n + 1; i <= m; i++) {
             _fac[i] = _fac[i - 1] * i % mod;
         }
-        _infac[m] = power(_fac[m], mod - 2, mod);
+        _infac[m] = power(_fac[m], mod - 2);
         for (int i = m; i > n; i--) {
             _infac[i - 1] = _infac[i] * i % mod;
             _inv[i] = _infac[i] * _fac[i - 1] % mod;
