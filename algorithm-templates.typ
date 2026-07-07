@@ -221,17 +221,17 @@
 
 #category("数据结构", "DATA STRUCTURES")
 
-#cpp-template("并查集", "DS/DSU.cpp")
-#cpp-template("树状数组", "DS/Fenwick.cpp")
-#cpp-template("线段树", "DS/SegmentTree.cpp")
+#cpp-template("并查集", "DataStructure/DSU.cpp")
+#cpp-template("树状数组", "DataStructure/Fenwick.cpp")
+#cpp-template("线段树", "DataStructure/SegmentTree.cpp")
 #cpp-template(
   "懒标记线段树",
-  "DS/LazySegmentTree.cpp",
+  "DataStructure/LazySegmentTree.cpp",
   remark: [维护幺半群信息时需正确设置幺元；`Info::apply` 与 `Tag::apply` 应保持标记语义一致。],
 )
-#cpp-template("李超线段树", "DS/LiChaoTree.cpp")
-#cpp-template("RMQ / Sparse Table", "DS/RMQ.cpp")
-#cpp-template("线性基", "DS/LinearBasis.cpp")
+#cpp-template("李超线段树", "DataStructure/LiChaoTree.cpp")
+#cpp-template("RMQ / Sparse Table", "DataStructure/RMQ.cpp")
+#cpp-template("线性基", "DataStructure/LinearBasis.cpp")
 #cpp-template(
   "离散化",
   "Tools/sparse.cpp",
