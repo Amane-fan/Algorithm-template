@@ -102,9 +102,9 @@ double distancePS(const Point<T> &p, const Line<T> &l) {
     return distancePL(p, l);
 }
 
-template <class T>
+template<class T>
 Point<T> lineIntersection(const Line<T> &l1, const Line<T> &l2) {
-    return l1.a + (l1.b - l1.a) * cross(l2.a - l1.a, l2.b - l2.a) / cross(l2.b - l2.a, l1.b - l1.a);
+    return l1.a + (l1.b - l1.a) * (cross(l2.b - l2.a, l1.a - l2.a) / cross(l2.b - l2.a, l1.a - l1.b));
 }
 
 template <class T>
