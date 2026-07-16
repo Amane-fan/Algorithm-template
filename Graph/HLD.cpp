@@ -87,7 +87,4 @@ struct HLD {
         res.emplace_back(min(dfn[x], dfn[y]), max(dfn[x], dfn[y]));
         return res;
     }
-    auto tie_arrays() {
-        return tie(dfn, siz, dep, par, top, out);
-    }
 };
