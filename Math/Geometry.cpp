@@ -1,5 +1,14 @@
 using F = long double;
 constexpr F eps = 1e-8;
+const F pi = acos(-1.L);
+
+template <class T>
+int sgn(T x) {
+    if (fabs(x) < eps) {
+        return 0;
+    }
+    return x < 0 ? -1 : 1;
+}
 
 template <class T>
 struct Point {
@@ -17,6 +26,25 @@ struct Point {
     Point operator/(const T &v) const {
         return {x / v, y / v};
     }
+    bool operator<(const Point<T> &o) const {
+        if (sgn(x - o.x) == 0) {
+            return y < o.y;
+        }
+        return x < o.x;
+    }
+    bool operator==(const Point<T> &o) const {
+        return sgn(x - o.x) == 0 && sgn(y - o.y) == 0;
+    }
+    bool operator!=(const Point<T> &o) const {
+        return !(*this == o);
+    }
+    friend ostream &operator<<(ostream &os, const Point<T> &p) {
+        return os << "(" << p.x << ", " << p.y << ")";
+    }
+    friend istream &operator>>(istream &is, Point<T> &p) {
+        is >> p.x >> p.y;
+        return is;
+    }
 };
 
 template <class T>
@@ -26,73 +54,64 @@ struct Line {
     Line(const Point<T> &a_ = Point<T>(), const Point<T> &b_ = Point<T>()): a(a_), b(b_) {}
 };
 
-template <class T>
-ostream &operator<<(ostream &os, const Point<T> &p) {
-    return os << "(" << p.x << ", " << p.y << ")";
-}
-
-template <class T>
-istream &operator>>(istream &is, Point<T> &p) {
-    is >> p.x >> p.y;
-    return is;
-}
-
-template <class T>
-bool equal(const T &x, const T &y) {
-    if constexpr (is_floating_point_v<T>) {
-        return fabs(x - y) < eps;
-    } else {
-        return x == y;
-    }
-}
-
+// 点积
 template <class T>
 T dot(const Point<T> &a, const Point<T> &b) {
     return a.x * b.x + a.y * b.y;
 }
 
+// 叉积
 template <class T>
 T cross(const Point<T> &a, const Point<T> &b) {
     return a.x * b.y - a.y * b.x;
 }
 
+// 向量长度平方
 template <class T>
 T square(const Point<T> &p) {
     return dot(p, p);
 }
 
+// 向量长度
 template <class T>
-double length(const Point<T> &p) {
-    return sqrt(square(p));
+F length(const Point<T> &p) {
+    return hypot<F>(p.x, p.y);
 }
 
+// 线段距离
 template <class T>
-double length(const Line<T> &l) {
+F length(const Line<T> &l) {
     return length(l.a - l.b);
 }
 
+// 判断是否平行
 template <class T>
 bool parallel(const Line<T> &l1, const Line<T> &l2) {
-    return equal(cross(l1.a - l1.b, l2.a - l2.b), T(0));
+    return sgn(cross(l1.a - l1.b, l2.a - l2.b)) == 0;
 }
 
+// 单位化向量
 template <class T>
-Point<T> normalize(const Point<T> &p) {
-    return p / length(p);
+Point<F> normalize(const Point<T> &p) {
+    F len = length(p);
+    return Point{p.x / len, p.y / len};
 }
 
+// 两点间距离
 template <class T>
-double distance(const Point<T> &a, const Point<T> &b) {
+F distance(const Point<T> &a, const Point<T> &b) {
     return length(b - a);
 }
 
+// 点到直线最短距离
 template <class T>
-double distancePL(const Point<T> &p, const Line<T> &l) {
+F distancePL(const Point<T> &p, const Line<T> &l) {
     return abs(cross(l.a - p, l.b - p)) / length(l);
 }
 
+// 点到线段最短距离
 template <class T>
-double distancePS(const Point<T> &p, const Line<T> &l) {
+F distancePS(const Point<T> &p, const Line<T> &l) {
     if (dot(p - l.a, l.b - l.a) < 0) {
         return distance(p, l.a);
     }
@@ -102,15 +121,27 @@ double distancePS(const Point<T> &p, const Line<T> &l) {
     return distancePL(p, l);
 }
 
-template<class T>
-Point<T> lineIntersection(const Line<T> &l1, const Line<T> &l2) {
-    return l1.a + (l1.b - l1.a) * (cross(l2.b - l2.a, l1.a - l2.a) / cross(l2.b - l2.a, l1.a - l1.b));
+// 向量逆时针旋转
+template <class T>
+Point<F> rotate(const Point<T> &p, F ang) {
+    F s = sin(ang);
+    F c = cos(ang);
+    return Point{p.x * c - p.y * s, p.x * s + p.y * c};
 }
 
+// 计算两条直线交点
+template<class T> 
+Point<F> lineIntersection(const Line<T> &l1, const Line<T> &l2) { 
+    F t = 1.L * cross(l2.b - l2.a, l1.a - l2.a) / cross(l2.b - l2.a, l1.a - l1.b);
+    auto p = l1.b - l1.a;
+    return Point{l1.a.x + p.x * t, l1.a.y + p.y * t};
+}
+
+// 凸包(仅支持整数)
 template <class T>
 auto getHull(vector<Point<T>> ps) {
     sort(ps.begin(), ps.end(), [&](const auto &p1, const auto &p2) {
-        return equal(p1.x, p2.x) ? p1.y < p2.y : p1.x < p2.x;
+        return p1.x == p2.x ? p1.y < p2.y : p1.x < p2.x;
     });
     vector<Point<T>> hi, lo;
     for (auto &p : ps) {
@@ -128,17 +159,20 @@ auto getHull(vector<Point<T>> ps) {
     return make_pair(lo, hi);
 }
 
+// 判断点是否在直线左侧
 template<class T>
 bool pointOnLineLeft(const Point<T> &p, const Line<T> &l) {
     return cross(l.b - l.a, p - l.a) > 0;
 }
 
+// 判断点是否在线段上(仅支持整数)
 template<class T>
 bool pointOnSegment(const Point<T> &p, const Line<T> &l) {
     return cross(p - l.a, l.b - l.a) == 0 && min(l.a.x, l.b.x) <= p.x && p.x <= max(l.a.x, l.b.x)
         && min(l.a.y, l.b.y) <= p.y && p.y <= max(l.a.y, l.b.y);
 }
 
+// 判断点是否在多边形内部(仅支持整数)
 template<class T>
 bool pointInPolygon(const Point<T> &a, const vector<Point<T>> &p) {
     int n = p.size();
