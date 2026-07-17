@@ -27,12 +27,12 @@ struct Line {
 };
 
 template <class T>
-std::ostream &operator<<(std::ostream &os, const Point<T> &p) {
+ostream &operator<<(ostream &os, const Point<T> &p) {
     return os << "(" << p.x << ", " << p.y << ")";
 }
 
 template <class T>
-std::istream &operator>>(std::istream &is, Point<T> &p) {
+istream &operator>>(istream &is, Point<T> &p) {
     is >> p.x >> p.y;
     return is;
 }
@@ -135,12 +135,12 @@ bool pointOnLineLeft(const Point<T> &p, const Line<T> &l) {
 
 template<class T>
 bool pointOnSegment(const Point<T> &p, const Line<T> &l) {
-    return cross(p - l.a, l.b - l.a) == 0 && std::min(l.a.x, l.b.x) <= p.x && p.x <= std::max(l.a.x, l.b.x)
-        && std::min(l.a.y, l.b.y) <= p.y && p.y <= std::max(l.a.y, l.b.y);
+    return cross(p - l.a, l.b - l.a) == 0 && min(l.a.x, l.b.x) <= p.x && p.x <= max(l.a.x, l.b.x)
+        && min(l.a.y, l.b.y) <= p.y && p.y <= max(l.a.y, l.b.y);
 }
 
 template<class T>
-bool pointInPolygon(const Point<T> &a, const std::vector<Point<T>> &p) {
+bool pointInPolygon(const Point<T> &a, const vector<Point<T>> &p) {
     int n = p.size();
     for (int i = 0; i < n; i++) {
         if (pointOnSegment(a, Line(p[i], p[(i + 1) % n]))) {
