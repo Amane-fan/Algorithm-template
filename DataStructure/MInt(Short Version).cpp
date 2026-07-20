@@ -23,22 +23,22 @@ struct MInt {
         assert(x != 0);
         return power(*this, P - 2);
     }
-    MInt& operator+=(const MInt &o) {
+    MInt &operator+=(const MInt &o) {
         x = (x + o.x) % P;
         return *this;
     }
-    MInt& operator-=(const MInt &o) {
+    MInt &operator-=(const MInt &o) {
         x -= o.x;
         if (x < 0) {
             x += P;
         }
         return *this;
     }
-    MInt& operator*=(const MInt &o) {
+    MInt &operator*=(const MInt &o) {
         x = (x * o.x) % P;
         return *this;
     }
-    MInt& operator/=(const MInt &o) {
+    MInt &operator/=(const MInt &o) {
         x = x * o.inv() % P;
         return *this;
     }
@@ -46,6 +46,7 @@ struct MInt {
     friend MInt operator-(MInt lhs, const MInt &rhs) { return lhs -= rhs; }
     friend MInt operator*(MInt lhs, const MInt &rhs) { return lhs *= rhs; }
     friend MInt operator/(MInt lhs, const MInt &rhs) { return lhs /= rhs; }
+    friend ostream &operator<<(ostream &os, const MInt &a) { return os << a.x; }
 };
 
 constexpr int mod = 998244353;
