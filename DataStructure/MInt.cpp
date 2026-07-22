@@ -50,6 +50,10 @@ struct MLong {
     explicit constexpr operator i64() const {
         return x;
     }
+    constexpr MLong pow(i64 exp) const {
+        assert(exp >= 0);
+        return power(*this, exp);
+    }
     constexpr MLong operator-() const {
         MLong res;
         res.x = norm(getMod() - x);
@@ -145,6 +149,10 @@ struct MInt {
     }
     explicit constexpr operator int() const {
         return x;
+    }
+    constexpr MInt pow(i64 exp) const {
+        assert(exp >= 0);
+        return power(*this, exp);
     }
     constexpr MInt operator-() const {
         MInt res;
