@@ -9,18 +9,21 @@ struct Fenwick {
             a[i] = a[i] + v;
         }
     }
-    void modify(int x, const T &v) {
-        add(x, v - rangeQuery(x, x));
+    void set(int x, const T &v) {
+        add(x, v - sum(x, x));
     }
-    T query(int x) {
-        T ans {};
+    T sum(int x) {
+        T ans{};
         for (int i = x; i > 0; i -= (i & -i)) {
             ans = ans + a[i];
         }
         return ans;
     }
-    T rangeQuery(int l, int r) {
-        return query(r) - query(l - 1);
+    T sum(int l, int r) {
+        if (l > r) {
+            return T{0};
+        }
+        return sum(r) - sum(l - 1);
     }
     int lower_bound(T v) {
         int x = 0;
