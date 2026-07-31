@@ -55,6 +55,9 @@ struct LazySegmentTree {
     void set(int x, const Info &v) {
         set(1, 1, n, x, v);
     }
+    Info get(int x) {
+        return prod(x, x);
+    }
     Info prod(int id, int l, int r, int x, int y) {
         if (x > r || y < l) {
             return Info();
@@ -135,7 +138,9 @@ struct LazySegmentTree {
 };
 
 struct Tag {
-    bool status = false;
+    bool status;
+
+    Tag(): status(false) {}
 
     void apply(const Tag &t) {
         if (!t.status) {
@@ -150,7 +155,9 @@ struct Tag {
 };
 
 struct Info {
-    bool status = false;
+    bool status;
+
+    Info(): status(false) {}
     
     void apply(const Tag &t) {
         if (!t.status) {
@@ -168,6 +175,8 @@ struct Info {
         }
         Info c;
         c.status = true;
+
+        
 
         return c;
     }

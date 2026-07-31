@@ -43,6 +43,9 @@ struct SegmentTree {
     void set(int x, const Info &v) {
         set(1, 1, n, x, v);
     }
+    Info get(int x) {
+        return prod(x, x);
+    }
     Info prod(int id, int l, int r, int x, int y) {
         if (x > r || y < l) {
             return Info();
@@ -103,7 +106,9 @@ struct SegmentTree {
 };
 
 struct Info {
-    bool status = false;
+    bool status;
+
+    Info(): staus(false) {}
 
     friend Info operator+(const Info &a, const Info &b) {
         if (!a.status) {
@@ -114,6 +119,8 @@ struct Info {
         }
         Info c;
         c.status = true;
+
+        
 
         return c;
     }
