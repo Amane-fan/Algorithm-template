@@ -108,7 +108,7 @@ struct SegmentTree {
 struct Info {
     bool status;
 
-    Info(): staus(false) {}
+    Info(): status(false) {}
 
     friend Info operator+(const Info &a, const Info &b) {
         if (!a.status) {
