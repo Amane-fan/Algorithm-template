@@ -72,7 +72,7 @@ struct LazySegmentTree {
     Info prod(int l, int r) {
         return prod(1, 1, n, l, r);
     }
-    void rangeApply(int id, int l, int r, int x, int y, const Tag &t) {
+    void apply(int id, int l, int r, int x, int y, const Tag &t) {
         if (x > r || y < l) {
             return;
         }
@@ -82,12 +82,12 @@ struct LazySegmentTree {
         }
         pushDown(id);
         int mid = (l + r) >> 1;
-        rangeApply(id * 2, l, mid, x, y, t);
-        rangeApply(id * 2 + 1, mid + 1, r, x, y, t);
+        apply(id * 2, l, mid, x, y, t);
+        apply(id * 2 + 1, mid + 1, r, x, y, t);
         pushUp(id);
     }
-    void rangeApply(int l, int r, const Tag &t) {
-        rangeApply(1, 1, n, l, r, t);
+    void apply(int l, int r, const Tag &t) {
+        apply(1, 1, n, l, r, t);
     }
     template<class F>
     int minLeft(int id, int l, int r, int x, int y, F &&pred) {
