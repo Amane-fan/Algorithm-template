@@ -2,7 +2,7 @@ struct HLD {
     int n;
     int cur;
     vector<vector<int>> adj;
-    vector<int> siz, par, hvy, dep, dfn, seq, top, out;
+    vector<int> siz, par, hvy, dep, dfn, rev, top, out;
     HLD() {}
     HLD(int N) {
         cur = 0;
@@ -13,7 +13,7 @@ struct HLD {
         hvy.resize(n + 1);
         dep.resize(n + 1);
         dfn.resize(n + 1);
-        seq.resize(n + 1);
+        rev.resize(n + 1);
         top.resize(n + 1);
         out.resize(n + 1);
     }
@@ -47,7 +47,7 @@ struct HLD {
         hvy[u] = hc;
     }
     void dfs2(int u, int p, int t) {
-        seq[++cur] = u;
+        rev[++cur] = u;
         dfn[u] = cur;
         top[u] = t;
         if (hvy[u] != 0) {
@@ -75,16 +75,16 @@ struct HLD {
     int dis(int x, int y) {
         return dep[x] + dep[y] - dep[lca(x, y)] * 2;
     }
-    vector<pair<int, int>> getPath(int x, int y) {
-        vector<pair<int, int>> res;
+    vector<array<int, 2>> getPath(int x, int y) {
+        vector<array<int, 2>> res;
         while (top[x] != top[y]) {
             if (dep[top[x]] < dep[top[y]]) {
                 swap(x, y);
             }
-            res.emplace_back(dfn[top[x]], dfn[x]);
+            res.push_back({dfn[top[x]], dfn[x]});
             x = par[top[x]];
         }
-        res.emplace_back(min(dfn[x], dfn[y]), max(dfn[x], dfn[y]));
+        res.push_back({min(dfn[x], dfn[y]), max(dfn[x], dfn[y])});
         return res;
     }
 };
