@@ -2390,9 +2390,6 @@ struct TreeHash {
         rt[r] = h[r];
         dfs2(r);
     }
-    auto tie_arrays() {
-        return tie(h, rt);
-    }
 };
 ```
 
