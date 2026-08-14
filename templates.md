@@ -1787,24 +1787,24 @@ vector<int> KMP(string s,string t) {
 > `Hash h(s); //1索引`
 >
 ```c++
-constexpr ull mod = (1ull << 61) - 1;
+constexpr u64 mod = (1ull << 61) - 1;
 mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
-uniform_int_distribution<ull> dist(mod / 2, mod - 1);
-const ull base = dist(rnd);
+uniform_int_distribution<u64> dist(mod / 2, mod - 1);
+const u64 base = dist(rnd);
 
 struct StringHash {
-    vector<ull> h;
-    vector<ull> p;
+    vector<u64> h;
+    vector<u64> p;
     StringHash() {}
     StringHash(const string &s) {
         init(s);
     }
-    static ull add(ull a, ull b) {
+    static u64 add(u64 a, u64 b) {
         a += b;
         if (a >= mod) a -= mod;
         return a;
     }
-    static ull mul(ull a, ull b) {
+    static u64 mul(u64 a, u64 b) {
         __uint128_t c = __uint128_t(a) * b;
         return add(c >> 61, c & mod);
     }
@@ -1819,7 +1819,7 @@ struct StringHash {
             h[i] = add(h[i], s[i]);
         }
     }
-    ull get(int l, int r) {
+    u64 get(int l, int r) {
         return add(h[r], mod - mul(h[l - 1], p[r - l + 1]));
     } 
 };
@@ -2348,13 +2348,13 @@ for (int i = 1; i < n * 2; i++) {
 
 ```c++
 mt19937_64 rnd(chrono::steady_clock::now().time_since_epoch().count());
-const ull mask = rnd();
+const u64 mask = rnd();
 struct TreeHash {
     int n;
-    vector<ull> h, rt;
+    vector<u64> h, rt;
     vector<vector<int>> adj;
     TreeHash(int N): n(N), adj(N + 1), h(N + 1), rt(N + 1) {}
-    static ull shift(ull x) {
+    static u64 shift(u64 x) {
         x ^= mask;
         x ^= x << 13;
         x ^= x >> 7;
