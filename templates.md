@@ -564,7 +564,7 @@ for (int i = 1; i <= n; i++) {
 > 以区间不同数字的数量为例
 > 时间复杂度 $O(n * \sqrt n)$
 ```c++
-	int n, q;
+int n, q;
 cin >> n >> q;
 vector<int> a(n + 1);
 for (int i = 1; i <= n; i++) {
