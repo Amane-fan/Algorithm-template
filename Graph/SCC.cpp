@@ -48,12 +48,12 @@ struct SCC {
         }
     }
     
-    vector<int> work() {
+    pair<int, vector<int>> work() {
         for (int i = 1; i <= n; i++) {
             if (dfn[i] == -1) {
                 dfs(i);
             }
         }
-        return bel;
+        return {cnt, bel};
     }
 };
