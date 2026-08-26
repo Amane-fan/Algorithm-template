@@ -1,10 +1,12 @@
-#let ink = rgb("#18222F")
-#let muted = rgb("#697586")
-#let accent = rgb("#D1644B")
-#let accent-soft = rgb("#F3DDD6")
-#let paper = rgb("#FCFAF7")
-#let code-bg = rgb("#F4F2EE")
-#let code-rule = rgb("#DDD8D0")
+#let ink = rgb("#20252D")
+#let muted = rgb("#737C86")
+#let accent = rgb("#3E7C78")
+#let accent-soft = rgb("#DDEAE7")
+#let paper = rgb("#FBFAF6")
+#let code-bg = rgb("#F2F3F0")
+#let rule = rgb("#D7DAD5")
+#let section-name = state("section-name", [])
+#let section-number = state("section-number", [])
 
 #set document(
   title: [Amane の Templates],
@@ -19,297 +21,225 @@
     top: 17mm,
     bottom: 17mm,
     inside: 16mm,
-    outside: 13mm,
+    outside: 14mm,
   ),
   fill: paper,
+  header-ascent: 8mm,
+  footer-descent: 8mm,
   header: context {
-    let p = counter(page).get().first()
-    if p > 1 {
-      set text(font: "Maple Mono NF", size: 7.8pt, fill: muted)
+    let page-number = counter(page).get().first()
+    if page-number > 2 {
+      set text(size: 7.2pt, fill: muted)
       grid(
         columns: (1fr, auto),
         align: (left, right),
-        [AMANE / ALGORITHM TEMPLATES],
-        [C++20],
+        section-name.get(),
+        [Amane の Templates],
       )
       v(2.5pt)
-      line(length: 100%, stroke: 0.45pt + code-rule)
+      line(length: 100%, stroke: 0.45pt + rule)
     }
   },
   footer: context {
-    let p = counter(page).get().first()
-    if p > 1 {
-      set text(font: "Maple Mono NF", size: 8pt, fill: muted)
-      line(length: 100%, stroke: 0.45pt + code-rule)
-      v(3pt)
-      grid(
-        columns: (1fr, auto, 1fr),
-        align: (left, center, right),
-        [PRINT EDITION],
-        counter(page).display("1"),
-        [2026.07],
-      )
+    let page-number = counter(page).get().first()
+    if page-number > 1 {
+      let label = if page-number < 10 {
+        "0" + str(page-number)
+      } else {
+        str(page-number)
+      }
+      align(right)[
+        #line(length: 13mm, stroke: 0.55pt + accent)
+        #h(4pt)
+        #text(size: 7.2pt, weight: "semibold", fill: accent)[#label]
+      ]
     }
   },
 )
 
 #set text(
   font: "Maple Mono NF",
-  size: 9.2pt,
+  size: 8.6pt,
   fill: ink,
   lang: "zh",
   region: "CN",
 )
-#set par(justify: true, leading: 0.62em)
-#set heading(numbering: "1.1")
-#show heading.where(level: 1): set text(
-  font: "Maple Mono NF",
-  size: 20pt,
+#set par(leading: 0.5em)
+#set heading(outlined: true)
+
+#show heading.where(level: 1): it => block(
+  width: 100%,
+  breakable: false,
+  above: 2pt,
+  below: 13pt,
+)[
+  #grid(
+    columns: (18mm, 1fr),
+    column-gutter: 7pt,
+    align: (right + horizon, left + horizon),
+    context text(
+      size: 27pt,
+      weight: "bold",
+      fill: accent-soft,
+    )[#section-number.get()],
+    [
+      #text(size: 6.6pt, weight: "semibold", fill: accent)[SECTION]
+      #v(1.5pt)
+      #text(size: 19pt, weight: "bold", fill: ink)[#it.body]
+    ],
+  )
+  #v(5pt)
+  #line(length: 100%, stroke: 0.7pt + accent)
+]
+
+#show heading.where(level: 2): it => block(
+  width: 100%,
+  sticky: true,
+  breakable: false,
+  above: 12pt,
+  below: 5pt,
+)[
+  #grid(
+    columns: (4pt, 1fr),
+    column-gutter: 7pt,
+    rect(width: 4pt, height: 13pt, radius: 2pt, fill: accent),
+    text(size: 11.2pt, weight: "semibold", fill: ink)[#it.body],
+  )
+]
+
+#show outline.entry.where(level: 1): set text(
+  size: 8.2pt,
   weight: "bold",
   fill: ink,
 )
-#show heading.where(level: 2): set text(
-  font: "Maple Mono NF",
-  size: 12.5pt,
-  weight: "bold",
-  fill: ink,
+#show outline.entry.where(level: 2): set text(
+  size: 7.25pt,
+  fill: muted,
 )
-#show heading.where(level: 1): set block(above: 18pt, below: 10pt)
-#show heading.where(level: 2): set block(above: 13pt, below: 4pt)
 
 #show raw: set text(
   font: "Maple Mono NF",
-  size: 6.45pt,
-  fill: rgb("#25313F"),
+  size: 6.35pt,
+  fill: rgb("#27323B"),
 )
 #show raw.where(block: true): it => block(
   width: 100%,
   breakable: true,
   fill: code-bg,
-  stroke: 0.45pt + code-rule,
-  radius: 2.5pt,
-  inset: (x: 6pt, y: 5pt),
-  above: 3pt,
-  below: 8pt,
+  stroke: 0.45pt + rule,
+  radius: 3pt,
+  inset: (left: 5pt, right: 5pt, top: 5pt, bottom: 5pt),
+  above: 0pt,
+  below: 10pt,
+  clip: true,
 )[#it]
 
-#let note(body) = block(
-  width: 100%,
-  fill: rgb("#F8EDE8"),
-  stroke: (left: 2pt + accent),
-  inset: (left: 7pt, right: 7pt, top: 5pt, bottom: 5pt),
-  above: 3pt,
-  below: 6pt,
-)[
-  #set text(size: 8pt, fill: rgb("#59443E"))
-  #body
-]
-
-#let cpp-template(title, path, remark: none) = {
+#let template(title, path) = {
   heading(level: 2)[#title]
-  if remark != none { note(remark) }
-  raw(read(path), lang: "cpp", block: true)
+  raw(read(path), lang: "cpp", block: true, tab-size: 2)
 }
 
-// 从 templates.md 中按二级标题提取代码块。只有无对应 cpp 的章节才调用。
-#let markdown = read("templates.md")
-#let md-code(title, index: none) = {
-  let marker = "## " + title
-  let section = markdown.split(marker).at(1).split(regex("\r?\n#{1,2} ")).first()
-  let chunks = section.split("```")
-  let snippets = ()
-  for (i, chunk) in chunks.enumerate() {
-    if calc.odd(i) {
-      snippets.push(chunk)
-    }
-  }
-  let selected = if index == none { snippets } else { (snippets.at(index),) }
-  for snippet in selected {
-    let lines = snippet.split("\n")
-    let language = lines.first().trim().replace("c++", "cpp")
-    let body = lines.slice(1).join("\n").trim()
-    raw(body, lang: language, block: true)
-  }
-}
-
-#let md-template(title, source-title: none, index: none, remark: none) = {
-  heading(level: 2)[#if source-title == none { title } else { source-title }]
-  if remark != none { note(remark) }
-  md-code(title, index: index)
-}
-
-#let category(title, kicker) = {
+#let category(number, title) = {
+  section-name.update(title)
+  section-number.update(number)
   pagebreak(weak: true)
-  block(
-    breakable: false,
-    width: 100%,
-    above: 8pt,
-    below: 3pt,
-  )[
-    #heading(level: 1)[#title]
-    #block(
-      width: 100%,
-      fill: accent,
-      inset: (x: 7pt, y: 3pt),
-      below: 7pt,
-    )[
-      #set text(size: 7pt, weight: "bold", fill: white)
-      #upper(kicker)
-    ]
+  heading(level: 1)[#title]
+}
+
+#block(width: 100%, height: 100%)[
+  #place(top + right, dx: -3mm, dy: 12mm)[
+    #circle(radius: 27mm, fill: accent-soft)
   ]
-}
-
-#let toc-column(from, to) = context {
-  let entries = query(selector(heading).after(here()))
-  let stop = calc.min(to, entries.len())
-  for entry in entries.slice(from, stop) {
-    let location = entry.location()
-    let numbers = counter(heading).at(location)
-    let number = numbering("1.1", ..numbers)
-    let page-number = counter(page).at(location).first()
-    block(below: 3pt)[
-      #set text(
-        size: if entry.level == 1 { 9.2pt } else { 8.55pt },
-        weight: if entry.level == 1 { "bold" } else { "regular" },
-        fill: ink,
-      )
-      #grid(
-        columns: (auto, 1fr, auto),
-        column-gutter: 4pt,
-        link(location)[
-          #if entry.level == 2 { h(8pt) }
-          #number #h(3.5pt) #entry.body
-        ],
-        align(horizon)[
-          #line(
-            length: 100%,
-            stroke: (
-              paint: code-rule,
-              thickness: 0.5pt,
-              dash: "dotted",
-            ),
-          )
-        ],
-        link(location)[#page-number],
-      )
-    ]
-  }
-}
-
-// 封面
-#align(center + horizon)[
-  #text(
-    font: "Maple Mono NF",
-    size: 34pt,
-    weight: "bold",
-    fill: ink,
-  )[Amane の Templates]
+  #place(top + right, dx: -3mm, dy: 12mm)[
+    #circle(
+      radius: 19mm,
+      fill: paper,
+      stroke: 0.65pt + accent,
+    )
+  ]
+  #place(bottom + left, dx: 6mm, dy: -15mm)[
+    #grid(
+      columns: (4mm, 1fr),
+      column-gutter: 9mm,
+      rect(
+        width: 3mm,
+        height: 76mm,
+        radius: 1.5mm,
+        fill: accent,
+      ),
+      block(width: 132mm)[
+        #grid(
+          columns: (1fr,),
+          row-gutter: 2mm,
+          text(size: 45pt, weight: "bold", fill: ink)[Amane],
+          text(size: 15pt, weight: "medium", fill: accent)[の],
+          text(size: 23pt, weight: "medium", fill: muted)[Templates],
+        )
+        #v(9mm)
+        #line(length: 100%, stroke: 0.55pt + rule)
+      ],
+    )
+  ]
 ]
 
-// 第二页开始：目录。目录条目自动显示每份模板的起始页。
 #pagebreak()
-#heading(level: 1, numbering: none, outlined: false)[目录]
-#line(length: 100%, stroke: 1pt + accent)
-#v(7pt)
-#grid(
-  columns: (1fr, 1fr),
-  column-gutter: 10mm,
-  toc-column(0, 32),
-  toc-column(32, 100),
-)
-#pagebreak()
-
-#category("数据结构", "DATA STRUCTURES")
-
-#cpp-template("并查集", "DataStructure/DSU.cpp")
-#cpp-template("树状数组", "DataStructure/Fenwick.cpp")
-#cpp-template("线段树", "DataStructure/SegmentTree.cpp")
-#cpp-template(
-  "懒标记线段树",
-  "DataStructure/LazySegmentTree.cpp",
-  remark: [维护幺半群信息时需正确设置幺元；`Info::apply` 与 `Tag::apply` 应保持标记语义一致。],
-)
-#cpp-template("李超线段树", "DataStructure/LiChaoTree.cpp")
-#cpp-template("RMQ / Sparse Table", "DataStructure/RMQ.cpp")
-#cpp-template("线性基", "DataStructure/LinearBasis.cpp")
-#cpp-template(
-  "离散化",
-  "Tools/sparse.cpp",
-  remark: [`offset` 决定参与排序去重的起始下标；1 索引数组应传入 `1`。],
-)
-#md-template("笛卡尔树")
-#md-template("分块", remark: [示例维护区间加与区间和。])
-#md-template("莫队", remark: [示例为离线查询区间不同数字数量。])
-#md-template("珂朵莉树")
-#md-template("组合哈希")
-
-#category("数学", "MATHEMATICS")
-
-#cpp-template("组合数（自动扩容）", "Math/Comb.cpp")
-#cpp-template("快速幂", "Math/power.cpp")
-#cpp-template("欧拉筛", "Math/sieve.cpp")
-#md-template("埃式筛")
-#md-template("线性求逆元", remark: [模数 `P` 必须为质数。])
-#cpp-template("扩展欧几里得", "Math/exgcd.cpp")
-#md-template("中国剩余定理")
-#cpp-template("卢卡斯定理", "Math/Lucas.cpp")
-#cpp-template("高斯消元", "Math/gauss.cpp")
-#cpp-template("矩阵快速幂", "Math/Matrix.cpp")
-
-#heading(level: 2)[曼哈顿距离与切比雪夫距离]
-#note[
-  映射 `(x, y) -> (x + y, x - y)` 后，原坐标系的曼哈顿距离变为新坐标系的切比雪夫距离。
-  反向映射可写为 `((x + y) / 2, (x - y) / 2)`。
+#block(width: 100%, below: 13pt)[
+  #text(size: 6.6pt, weight: "semibold", fill: accent)[CONTENTS]
+  #v(1.5pt)
+  #text(size: 25pt, weight: "bold", fill: ink)[目录]
+  #v(6pt)
+  #line(length: 100%, stroke: 0.7pt + accent)
+]
+#columns(2, gutter: 9mm)[
+  #outline(title: none, depth: 2, indent: 8pt)
 ]
 
-#md-template("数论分块")
-#cpp-template("计算几何", "Math/Geometry.cpp")
-#md-template("素数测试与因式分解")
-#cpp-template("多项式 / NTT", "Math/Polynomial.cpp")
-#cpp-template("快速 GCD", "Math/FastGCD.cpp")
-#cpp-template("向下取整与向上取整", "Math/divide.cpp")
+#category("01", "数据结构")
+#template("DSU", "DataStructure/DSU.cpp")
+#template("Fenwick", "DataStructure/Fenwick.cpp")
+#template("RMQ", "DataStructure/RMQ.cpp")
+#template("SegmentTree", "DataStructure/SegmentTree.cpp")
+#template("LazySegmentTree", "DataStructure/LazySegmentTree.cpp")
+#template("LiChaoTree", "DataStructure/LiChaoTree.cpp")
+#template("Mo_Algorithm", "DataStructure/Mo_Algorithm.cpp")
+#template("LinearBasis", "DataStructure/LinearBasis.cpp")
+#template("MInt(Short Version)", "DataStructure/MInt(Short Version).cpp")
 
-#category("字符串", "STRINGS")
+#category("02", "图论")
+#template("Dijkstra", "Graph/Dijkstra.cpp")
+#template("SPFA", "Graph/SPFA.cpp")
+#template("LCA(倍增)", "Graph/LCA(倍增).cpp")
+#template("LCA(DFS序)", "Graph/LCA(DFS序).cpp")
+#template("HLD", "Graph/HLD.cpp")
+#template("树的重心", "Graph/树的重心.cpp")
+#template("TreeHash", "Graph/TreeHash.cpp")
+#template("SCC", "Graph/SCC.cpp")
+#template("EBCC", "Graph/EBCC.cpp")
+#template("Hierholzer(无向图)", "Graph/Hierholzer(无向图).cpp")
+#template("Hierholzer(有向图)", "Graph/Hierholzer(有向图).cpp")
+#template("匈牙利算法", "Graph/匈牙利算法.cpp")
 
-#cpp-template("KMP", "String/KMP.cpp", remark: [下标从 `0` 开始。])
-#cpp-template("字符串哈希（随机底数）", "String/StringHash.cpp")
-#md-template(
-  "字符串哈希（随机底数模数）",
-  source-title: "字符串哈希（随机底数与模数）",
-)
-#cpp-template("字典树", "String/Trie.cpp")
-#md-template(
-  "字典树",
-  source-title: "01 字典树",
-  index: 1,
-  remark: [补充整数最大异或查询变体。],
-)
-#cpp-template("Z 函数", "String/z_algorithm.cpp", remark: [下标从 `0` 开始。])
-#cpp-template("Manacher", "String/Manacher.cpp", remark: [下标从 `0` 开始。])
+#category("03", "数学")
+#template("power", "Math/power.cpp")
+#template("exgcd", "Math/exgcd.cpp")
+#template("FastGCD", "Math/FastGCD.cpp")
+#template("divide", "Math/divide.cpp")
+#template("sieve", "Math/sieve.cpp")
+#template("Comb", "Math/Comb.cpp")
+#template("Lucas", "Math/Lucas.cpp")
+#template("Matrix", "Math/Matrix.cpp")
+#template("gauss", "Math/gauss.cpp")
+#template("Polynomial", "Math/Polynomial.cpp")
+#template("Geometry", "Math/Geometry.cpp")
 
-#category("图与树", "GRAPHS & TREES")
+#category("04", "字符串")
+#template("KMP", "String/KMP.cpp")
+#template("z_algorithm", "String/z_algorithm.cpp")
+#template("Manacher", "String/Manacher.cpp")
+#template("StringHash", "String/StringHash.cpp")
+#template("Trie", "String/Trie.cpp")
 
-#cpp-template("Dijkstra", "Graph/Dijkstra.cpp")
-#md-template("Floyd")
-#cpp-template("SPFA", "Graph/SPFA.cpp")
-#md-template(
-  "差分约束",
-  remark: [约束 `a - b <= c` 转化为一条 `b -> a`、边权为 `c` 的有向边。],
-)
-#cpp-template("LCA（倍增）", "Graph/LCA(倍增).cpp")
-#cpp-template("LCA（DFS 序）", "Graph/LCA(DFS序).cpp")
-#cpp-template("树链剖分", "Graph/HLD.cpp")
-#md-template("克鲁斯卡尔重构树")
-#cpp-template("树哈希", "Graph/TreeHash.cpp")
-#md-template("树的重心")
-#cpp-template("Hierholzer（无向图）", "Graph/Hierholzer(无向图).cpp")
-#cpp-template("Hierholzer（有向图）", "Graph/Hierholzer(有向图).cpp")
-#cpp-template("强连通分量", "Graph/SCC.cpp")
-
-#category("常用工具", "UTILITIES")
-
-#cpp-template("chmin / chmax", "Tools/change.cpp")
-#cpp-template("int128 输入输出与运算", "Tools/int128.cpp")
-#md-template("编译脚本")
-#md-template("对拍（linux）", source-title: "对拍（Linux）")
-#md-template("各种随机数的生成", source-title: "随机数据生成")
+#category("05", "其他")
+#template("change", "others/change.cpp")
+#template("hash", "others/hash.cpp")
+#template("random", "others/random.cpp")
