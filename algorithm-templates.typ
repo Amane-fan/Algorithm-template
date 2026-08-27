@@ -5,6 +5,7 @@
 #let paper = rgb("#FBFAF6")
 #let code-bg = rgb("#F2F3F0")
 #let rule = rgb("#D7DAD5")
+#let min-code-lines-at-start = 11
 #let section-name = state("section-name", [])
 #let section-number = state("section-number", [])
 
@@ -108,20 +109,47 @@
 ]
 
 #show outline.entry.where(level: 1): set text(
-  size: 8.2pt,
+  size: 9pt,
   weight: "bold",
   fill: ink,
 )
+#show outline.entry.where(level: 1): it => block(
+  above: 8pt,
+  below: 7pt,
+)[#it]
 #show outline.entry.where(level: 2): set text(
-  size: 7.25pt,
+  size: 8.3pt,
   fill: muted,
 )
+#show outline.entry.where(level: 2): it => block(
+  above: 7pt,
+  below: 7pt,
+)[#it]
 
 #show raw: set text(
   font: "Maple Mono NF",
   size: 6.35pt,
   fill: rgb("#27323B"),
 )
+#show raw.line: code-line => if (
+  code-line.number < min-code-lines-at-start
+  and code-line.number < code-line.count
+) {
+  block(
+    width: 100%,
+    sticky: true,
+    above: 0pt,
+    below: 0pt,
+  )[
+    #if code-line.text == "" {
+      text(" ")
+    } else {
+      code-line.body
+    }
+  ]
+} else {
+  code-line.body
+}
 #show raw.where(block: true): it => block(
   width: 100%,
   breakable: true,
@@ -183,16 +211,14 @@
 ]
 
 #pagebreak()
-#block(width: 100%, below: 13pt)[
+#block(width: 100%, below: 8pt)[
   #text(size: 6.6pt, weight: "semibold", fill: accent)[CONTENTS]
-  #v(1.5pt)
-  #text(size: 25pt, weight: "bold", fill: ink)[目录]
-  #v(6pt)
+  #v(1pt)
+  #text(size: 23pt, weight: "bold", fill: ink)[目录]
+  #v(4pt)
   #line(length: 100%, stroke: 0.7pt + accent)
 ]
-#columns(2, gutter: 9mm)[
-  #outline(title: none, depth: 2, indent: 8pt)
-]
+#outline(title: none, depth: 2, indent: 14pt)
 
 #category("01", "数据结构")
 #template("DSU", "DataStructure/DSU.cpp")
@@ -211,6 +237,7 @@
 #template("LCA(倍增)", "Graph/LCA(倍增).cpp")
 #template("LCA(DFS序)", "Graph/LCA(DFS序).cpp")
 #template("HLD", "Graph/HLD.cpp")
+#template("DSU on Tree", "Graph/dsu_on_tree.cpp")
 #template("树的重心", "Graph/树的重心.cpp")
 #template("TreeHash", "Graph/TreeHash.cpp")
 #template("SCC", "Graph/SCC.cpp")
