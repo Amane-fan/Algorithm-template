@@ -18,13 +18,14 @@
   - [LCA(倍增)](#graph-03)
   - [LCA(DFS序)](#graph-04)
   - [HLD](#graph-05)
-  - [树的重心](#graph-06)
-  - [TreeHash](#graph-07)
-  - [SCC](#graph-08)
-  - [EBCC](#graph-09)
-  - [Hierholzer(无向图)](#graph-10)
-  - [Hierholzer(有向图)](#graph-11)
-  - [匈牙利算法](#graph-12)
+  - [DSU on Tree](#graph-06)
+  - [树的重心](#graph-07)
+  - [TreeHash](#graph-08)
+  - [SCC](#graph-09)
+  - [EBCC](#graph-10)
+  - [Hierholzer(无向图)](#graph-11)
+  - [Hierholzer(有向图)](#graph-12)
+  - [匈牙利算法](#graph-13)
 - [数学](#math)
   - [power](#math-01)
   - [exgcd](#math-02)
@@ -1022,6 +1023,75 @@ struct HLD {
 
 <a id="graph-06"></a>
 
+### DSU on Tree
+
+```cpp
+vector<int> siz(n + 1), dfn(n + 1), hvy(n + 1), rev(n + 1);
+int now = 1;
+auto dfs1 = [&](auto &&self, int u, int p) -> void {
+    siz[u] = 1;
+    dfn[u] = now;
+    rev[now] = u;
+    now++;
+    int mx = 0, hc = 0;
+    for (auto v : adj[u]) {
+        if (v == p) {
+            continue;
+        }
+        self(self, v, u);
+        siz[u] += siz[v];
+        if (siz[v] > mx) {
+            mx = siz[v];
+            hc = v;
+        }
+    }
+    hvy[u] = hc;
+};
+dfs1(dfs1, 1, 0);
+
+auto add = [&](int x) -> void {
+
+};
+
+auto delSubTree = [&](int x) -> void {
+
+};
+
+vector<i64> ans(n + 1);
+auto dfs2 = [&](auto &&self, int u, int p, bool keep) -> void {
+    for (auto v : adj[u]) {
+        if (v == p || v == hvy[u]) {
+            continue;
+        }
+        self(self, v, u, false);
+    }
+
+    if (hvy[u] != 0) {
+        self(self, hvy[u], u, true);
+    }
+
+    add(u);
+
+    for (auto v : adj[u]) {
+        if (v == p || v == hvy[u]) {
+            continue;
+        }
+        for (int i = dfn[v]; i < dfn[v] + siz[v]; i++) {
+            add(rev[i]);
+        }
+    }
+
+    // ans[u] =
+
+    if (!keep) {
+        delSubTree(u);
+    }
+};
+dfs2(dfs2, 1, 0, true);
+```
+
+<a id="graph-07"></a>
+
 ### 树的重心
 
 ```cpp
@@ -1049,7 +1119,7 @@ vector<int> g;
 }
 ```
 
-<a id="graph-07"></a>
+<a id="graph-08"></a>
 
 ### TreeHash
 
@@ -1100,7 +1170,7 @@ struct TreeHash {
 };
 ```
 
-<a id="graph-08"></a>
+<a id="graph-09"></a>
 
 ### SCC
 
@@ -1166,7 +1236,7 @@ struct SCC {
 };
 ```
 
-<a id="graph-09"></a>
+<a id="graph-10"></a>
 
 ### EBCC
 
@@ -1255,7 +1325,7 @@ struct EBCC {
 };
 ```
 
-<a id="graph-10"></a>
+<a id="graph-11"></a>
 
 ### Hierholzer(无向图)
 
@@ -1321,7 +1391,7 @@ vector<int> Hierholzer(vector<vector<int>> adj) {
 }
 ```
 
-<a id="graph-11"></a>
+<a id="graph-12"></a>
 
 ### Hierholzer(有向图)
 
@@ -1388,7 +1458,7 @@ vector<int> Hierholzer(vector<vector<int>> adj) {
 }
 ```
 
-<a id="graph-12"></a>
+<a id="graph-13"></a>
 
 ### 匈牙利算法
 
