@@ -2,58 +2,56 @@
 
 ## 目录
 
-- [数据结构](#data-structure)
-  - [DSU](#data-structure-01)
-  - [Fenwick](#data-structure-02)
-  - [RMQ](#data-structure-03)
-  - [SegmentTree](#data-structure-04)
-  - [LazySegmentTree](#data-structure-05)
-  - [LiChaoTree](#data-structure-06)
-  - [Mo_Algorithm](#data-structure-07)
-  - [LinearBasis](#data-structure-08)
-  - [MInt(Short Version)](#data-structure-09)
-- [图论](#graph)
-  - [Dijkstra](#graph-01)
-  - [SPFA](#graph-02)
-  - [LCA(倍增)](#graph-03)
-  - [LCA(DFS序)](#graph-04)
-  - [HLD](#graph-05)
-  - [DSU on Tree](#graph-06)
-  - [树的重心](#graph-07)
-  - [TreeHash](#graph-08)
-  - [SCC](#graph-09)
-  - [EBCC](#graph-10)
-  - [Hierholzer(无向图)](#graph-11)
-  - [Hierholzer(有向图)](#graph-12)
-  - [匈牙利算法](#graph-13)
-- [数学](#math)
-  - [power](#math-01)
-  - [exgcd](#math-02)
-  - [FastGCD](#math-03)
-  - [divide](#math-04)
-  - [sieve](#math-05)
-  - [Comb](#math-06)
-  - [Lucas](#math-07)
-  - [Matrix](#math-08)
-  - [gauss](#math-09)
-  - [Polynomial](#math-10)
-  - [Geometry](#math-11)
-- [字符串](#string)
-  - [KMP](#string-01)
-  - [z_algorithm](#string-02)
-  - [Manacher](#string-03)
-  - [StringHash](#string-04)
-  - [Trie](#string-05)
-- [其他](#others)
-  - [change](#others-01)
-  - [hash](#others-02)
-  - [random](#others-03)
-
-<a id="data-structure"></a>
+- [数据结构](#数据结构)
+  - [DSU](#dsu)
+  - [Fenwick](#fenwick)
+  - [RMQ](#rmq)
+  - [SegmentTree](#segmenttree)
+  - [LazySegmentTree](#lazysegmenttree)
+  - [LiChaoTree](#lichaotree)
+  - [Mo_Algorithm](#mo_algorithm)
+  - [LinearBasis](#linearbasis)
+  - [MInt(Short Version)](#mintshort-version)
+- [图论](#图论)
+  - [Dijkstra](#dijkstra)
+  - [SPFA](#spfa)
+  - [LCA(倍增)](#lca倍增)
+  - [LCA(DFS序)](#lcadfs序)
+  - [HLD](#hld)
+  - [DSU on Tree](#dsu-on-tree)
+  - [树的重心](#树的重心)
+  - [TreeHash](#treehash)
+  - [SCC](#scc)
+  - [EBCC](#ebcc)
+  - [Hierholzer(无向图)](#hierholzer无向图)
+  - [Hierholzer(有向图)](#hierholzer有向图)
+  - [匈牙利算法](#匈牙利算法)
+- [数学](#数学)
+  - [power](#power)
+  - [exgcd](#exgcd)
+  - [FastGCD](#fastgcd)
+  - [divide](#divide)
+  - [sieve](#sieve)
+  - [Comb](#comb)
+  - [Lucas](#lucas)
+  - [Matrix](#matrix)
+  - [gauss](#gauss)
+  - [Polynomial](#polynomial)
+  - [Geometry](#geometry)
+  - [卡特兰数](#卡特兰数)
+  - [第二类斯特林数](#第二类斯特林数)
+- [字符串](#字符串)
+  - [KMP](#kmp)
+  - [z_algorithm](#z_algorithm)
+  - [Manacher](#manacher)
+  - [StringHash](#stringhash)
+  - [Trie](#trie)
+- [其他](#其他)
+  - [change](#change)
+  - [hash](#hash)
+  - [random](#random)
 
 ## 数据结构
-
-<a id="data-structure-01"></a>
 
 ### DSU
 
@@ -91,8 +89,6 @@ struct DSU {
     }
 };
 ```
-
-<a id="data-structure-02"></a>
 
 ### Fenwick
 
@@ -147,8 +143,6 @@ struct Fenwick {
 };
 ```
 
-<a id="data-structure-03"></a>
-
 ### RMQ
 
 ```cpp
@@ -177,8 +171,6 @@ struct RMQ {
     }
 };
 ```
-
-<a id="data-structure-04"></a>
 
 ### SegmentTree
 
@@ -312,8 +304,6 @@ struct Info {
     
 };
 ```
-
-<a id="data-structure-05"></a>
 
 ### LazySegmentTree
 
@@ -504,8 +494,6 @@ struct Info {
 };
 ```
 
-<a id="data-structure-06"></a>
-
 ### LiChaoTree
 
 ```cpp
@@ -584,8 +572,6 @@ struct LiChaoTree {
 };
 ```
 
-<a id="data-structure-07"></a>
-
 ### Mo_Algorithm
 
 ```cpp
@@ -643,8 +629,6 @@ for (int i = 0, l = 1, r = 0; i < q; i++) {
     ans[id] = cur;
 }
 ```
-<a id="data-structure-08"></a>
-
 ### LinearBasis
 
 ```cpp
@@ -708,8 +692,6 @@ struct LinearBasis {
 };
 ```
 
-<a id="data-structure-09"></a>
-
 ### MInt(Short Version)
 
 ```cpp
@@ -768,11 +750,7 @@ constexpr int mod = 998244353;
 using Z = MInt<mod>;
 ```
 
-<a id="graph"></a>
-
 ## 图论
-
-<a id="graph-01"></a>
 
 ### Dijkstra
 
@@ -800,8 +778,6 @@ vector<i64> dijkstra(const vector<vector<array<int, 2>>> &adj, int s) {
     return dis;
 }
 ```
-
-<a id="graph-02"></a>
 
 ### SPFA
 
@@ -838,8 +814,6 @@ vector<i64> spfa(const vector<vector<array<int, 2>>> &adj, int s) {
     return dis;
 }
 ```
-
-<a id="graph-03"></a>
 
 ### LCA(倍增)
 
@@ -881,8 +855,6 @@ auto lca = [&](int x, int y) -> int {
 };
 ```
 
-<a id="graph-04"></a>
-
 ### LCA(DFS序)
 
 ```cpp
@@ -923,8 +895,6 @@ auto lca = [&](int x, int y) -> int {
     return par[rmq.query(dfn[x], dfn[y])];
 };
 ```
-
-<a id="graph-05"></a>
 
 ### HLD
 
@@ -1021,8 +991,6 @@ struct HLD {
 };
 ```
 
-<a id="graph-06"></a>
-
 ### DSU on Tree
 
 ```cpp
@@ -1090,8 +1058,6 @@ auto dfs2 = [&](auto &&self, int u, int p, bool keep) -> void {
 dfs2(dfs2, 1, 0, true);
 ```
 
-<a id="graph-07"></a>
-
 ### 树的重心
 
 ```cpp
@@ -1118,8 +1084,6 @@ vector<int> g;
     dfs(dfs, 1);
 }
 ```
-
-<a id="graph-08"></a>
 
 ### TreeHash
 
@@ -1169,8 +1133,6 @@ struct TreeHash {
     }
 };
 ```
-
-<a id="graph-09"></a>
 
 ### SCC
 
@@ -1235,8 +1197,6 @@ struct SCC {
     }
 };
 ```
-
-<a id="graph-10"></a>
 
 ### EBCC
 
@@ -1325,8 +1285,6 @@ struct EBCC {
 };
 ```
 
-<a id="graph-11"></a>
-
 ### Hierholzer(无向图)
 
 ```cpp
@@ -1390,8 +1348,6 @@ vector<int> Hierholzer(vector<vector<int>> adj) {
     return path;
 }
 ```
-
-<a id="graph-12"></a>
 
 ### Hierholzer(有向图)
 
@@ -1458,8 +1414,6 @@ vector<int> Hierholzer(vector<vector<int>> adj) {
 }
 ```
 
-<a id="graph-13"></a>
-
 ### 匈牙利算法
 
 ```cpp
@@ -1500,11 +1454,7 @@ for (int i = 1; i <= n; i++) {
 cout << ans << '\n';
 ```
 
-<a id="math"></a>
-
 ## 数学
-
-<a id="math-01"></a>
 
 ### power
 
@@ -1523,8 +1473,6 @@ i64 power(i64 a, i64 b) {
 }
 ```
 
-<a id="math-02"></a>
-
 ### exgcd
 
 ```cpp
@@ -1537,8 +1485,6 @@ array<T, 3> exgcd(const T &a, const T &b) {
     return {g, y, x - a / b * y};
 }
 ```
-
-<a id="math-03"></a>
 
 ### FastGCD
 
@@ -1625,8 +1571,6 @@ struct FastGCD {
 };
 ```
 
-<a id="math-04"></a>
-
 ### divide
 
 ```cpp
@@ -1652,8 +1596,6 @@ T ceil_div(const T &a, const T &b) {
     return q;
 }
 ```
-
-<a id="math-05"></a>
 
 ### sieve
 
@@ -1681,8 +1623,6 @@ void sieve(int n) {
     }
 }
 ```
-
-<a id="math-06"></a>
 
 ### Comb
 
@@ -1739,8 +1679,6 @@ struct Comb {
 } comb;
 ```
 
-<a id="math-07"></a>
-
 ### Lucas
 
 ```cpp
@@ -1755,8 +1693,6 @@ i64 Lucas(i64 n, i64 m) {
     return (i128)comb.binom(ni, mi) * Lucas(n / mod, m / mod) % mod;
 }
 ```
-
-<a id="math-08"></a>
 
 ### Matrix
 
@@ -1796,8 +1732,6 @@ T power(T a, i64 b) {
 }
 ```
 
-<a id="math-09"></a>
-
 ### gauss
 
 ```cpp
@@ -1831,8 +1765,6 @@ bool gauss(vector<vector<int>> &a) {
     return true;
 }
 ```
-
-<a id="math-10"></a>
 
 ### Polynomial
 
@@ -2120,8 +2052,6 @@ using Poly = PolyNTT<mod, G>;
 using poly = vector<i64>;
 ```
 
-<a id="math-11"></a>
-
 ### Geometry
 
 ```cpp
@@ -2325,11 +2255,42 @@ bool pointInPolygon(const Point<T> &a, const vector<Point<T>> &p) {
 }
 ```
 
-<a id="string"></a>
+### 卡特兰数
+
+令 $C_n$ 表示第 $n$ 个卡特兰数：
+
+$$
+C_n = \frac{1}{n+1}\binom{2n}{n}
+    = \binom{2n}{n} - \binom{2n}{n-1}.
+$$
+
+初值与常用递推式：
+
+$$
+C_0 = 1,\qquad
+C_n = \sum_{i=0}^{n-1} C_i C_{n-1-i},\qquad
+C_n = \frac{4n-2}{n+1}C_{n-1}\ (n\geq 1).
+$$
+
+### 第二类斯特林数
+
+令 $S(n,k)$ 表示将 $n$ 个不同元素划分为 $k$ 个非空、无标号集合的方案数。
+
+$$
+S(0,0)=1,\qquad S(n,0)=0\ (n>0),\qquad S(0,k)=0\ (k>0).
+$$
+
+递推式与容斥形式：
+
+$$
+S(n,k)=S(n-1,k-1)+kS(n-1,k),
+$$
+
+$$
+S(n,k)=\frac{1}{k!}\sum_{i=0}^{k}(-1)^{k-i}\binom{k}{i}i^n.
+$$
 
 ## 字符串
-
-<a id="string-01"></a>
 
 ### KMP
 
@@ -2370,8 +2331,6 @@ vector<int> KMP(const string &s, const string &t) {
 }
 ```
 
-<a id="string-02"></a>
-
 ### z_algorithm
 
 ```cpp
@@ -2391,8 +2350,6 @@ vector<int> z_algorithm(const string &s) {
     return z;
 }
 ```
-
-<a id="string-03"></a>
 
 ### Manacher
 
@@ -2419,8 +2376,6 @@ vector<int> manacher(const string &s) {
     return r;
 }
 ```
-
-<a id="string-04"></a>
 
 ### StringHash
 
@@ -2463,8 +2418,6 @@ struct StringHash {
 };
 ```
 
-<a id="string-05"></a>
-
 ### Trie
 
 ```cpp
@@ -2493,11 +2446,7 @@ void insert(const string &s) {
 }
 ```
 
-<a id="others"></a>
-
 ## 其他
-
-<a id="others-01"></a>
 
 ### change
 
@@ -2520,8 +2469,6 @@ bool chmax(T &a, const T &b) {
 	return false;
 }
 ```
-
-<a id="others-02"></a>
 
 ### hash
 
@@ -2546,8 +2493,6 @@ struct Hash {
 
 unordered_map<array<int, 2>, int, Hash> M;
 ```
-
-<a id="others-03"></a>
 
 ### random
 

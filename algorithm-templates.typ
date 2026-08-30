@@ -259,6 +259,32 @@
 #template("Polynomial", "Math/Polynomial.cpp")
 #template("Geometry", "Math/Geometry.cpp")
 
+== 卡特兰数
+
+令 $C_n$ 表示第 $n$ 个卡特兰数：
+
+$ C_n = 1 / (n + 1) binom(2n, n) = binom(2n, n) - binom(2n, n - 1) $
+
+初值与常用递推式：
+
+$ C_0 = 1, quad C_n = sum_(i = 0)^(n - 1) C_i C_(n - 1 - i) $
+
+$ C_n = (4n - 2) / (n + 1) C_(n - 1) quad (n >= 1) $
+
+== 第二类斯特林数
+
+令 $S_(n, k)$ 表示将 $n$ 个不同元素划分为 $k$ 个非空、无标号集合的方案数。
+
+$ S_(0, 0) = 1, quad S_(n, 0) = 0 quad (n > 0), quad S_(0, k) = 0 quad (k > 0) $
+
+递推式：
+
+$ S_(n, k) = S_(n - 1, k - 1) + k S_(n - 1, k) $
+
+容斥形式：
+
+$ S_(n, k) = 1 / k! sum_(i = 0)^k (-1)^(k - i) binom(k, i) i^n $
+
 #category("04", "字符串")
 #template("KMP", "String/KMP.cpp")
 #template("z_algorithm", "String/z_algorithm.cpp")
