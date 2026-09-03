@@ -3,57 +3,58 @@
 ## 目录
 
 - [数据结构](#数据结构)
-  - [DSU](#dsu)
-  - [Fenwick](#fenwick)
-  - [RMQ](#rmq)
-  - [SegmentTree](#segmenttree)
-  - [LazySegmentTree](#lazysegmenttree)
-  - [LiChaoTree](#lichaotree)
-  - [Mo_Algorithm](#mo_algorithm)
-  - [LinearBasis](#linearbasis)
-  - [MInt(Short Version)](#mintshort-version)
+  - [并查集](#并查集)
+  - [树状数组](#树状数组)
+  - [ST表](#st表)
+  - [线段树](#线段树)
+  - [懒标记线段树](#懒标记线段树)
+  - [李超树](#李超树)
+  - [莫队](#莫队)
+  - [线性基](#线性基)
+  - [取模类(Short Version)](#取模类short-version)
 - [图论](#图论)
   - [Dijkstra](#dijkstra)
   - [SPFA](#spfa)
   - [LCA(倍增)](#lca倍增)
   - [LCA(DFS序)](#lcadfs序)
-  - [HLD](#hld)
-  - [DSU on Tree](#dsu-on-tree)
+  - [重链剖分](#重链剖分)
+  - [树上启发式合并](#树上启发式合并)
   - [树的重心](#树的重心)
-  - [TreeHash](#treehash)
-  - [SCC](#scc)
-  - [EBCC](#ebcc)
-  - [Hierholzer(无向图)](#hierholzer无向图)
-  - [Hierholzer(有向图)](#hierholzer有向图)
+  - [树哈希](#树哈希)
+  - [强连通分量](#强连通分量)
+  - [边双](#边双)
+  - [欧拉回路(无向图)](#欧拉回路无向图)
+  - [欧拉回路(有向图)](#欧拉回路有向图)
   - [匈牙利算法](#匈牙利算法)
 - [数学](#数学)
-  - [power](#power)
-  - [exgcd](#exgcd)
+  - [快速幂](#快速幂)
+  - [扩展欧几里得](#扩展欧几里得)
   - [FastGCD](#fastgcd)
-  - [divide](#divide)
-  - [sieve](#sieve)
-  - [Comb](#comb)
-  - [Lucas](#lucas)
-  - [Matrix](#matrix)
-  - [gauss](#gauss)
-  - [Polynomial](#polynomial)
-  - [Geometry](#geometry)
+  - [上下取整](#上下取整)
+  - [线性筛](#线性筛)
+  - [组合数](#组合数)
+  - [卢卡斯](#卢卡斯)
+  - [矩阵类](#矩阵类)
+  - [高斯消元](#高斯消元)
+  - [多项式](#多项式)
+  - [几何](#几何)
   - [卡特兰数](#卡特兰数)
   - [第二类斯特林数](#第二类斯特林数)
 - [字符串](#字符串)
   - [KMP](#kmp)
-  - [z_algorithm](#z_algorithm)
-  - [Manacher](#manacher)
-  - [StringHash](#stringhash)
-  - [Trie](#trie)
+  - [Z函数](#z函数)
+  - [马拉车](#马拉车)
+  - [字符串哈希](#字符串哈希)
+  - [字典树](#字典树)
+  - [最小表示法](#最小表示法)
 - [其他](#其他)
   - [change](#change)
-  - [hash](#hash)
-  - [random](#random)
+  - [自定义哈希](#自定义哈希)
+  - [随机数](#随机数)
 
 ## 数据结构
 
-### DSU
+### 并查集
 
 ```cpp
 struct DSU {
@@ -90,7 +91,7 @@ struct DSU {
 };
 ```
 
-### Fenwick
+### 树状数组
 
 ```cpp
 template <class T>
@@ -143,7 +144,7 @@ struct Fenwick {
 };
 ```
 
-### RMQ
+### ST表
 
 ```cpp
 template<class T, class F>
@@ -172,7 +173,7 @@ struct RMQ {
 };
 ```
 
-### SegmentTree
+### 线段树
 
 ```cpp
 template <class Info>
@@ -305,7 +306,7 @@ struct Info {
 };
 ```
 
-### LazySegmentTree
+### 懒标记线段树
 
 ```cpp
 template <class Info, class Tag>
@@ -494,7 +495,7 @@ struct Info {
 };
 ```
 
-### LiChaoTree
+### 李超树
 
 ```cpp
 constexpr i64 inf = 2e18;
@@ -572,7 +573,7 @@ struct LiChaoTree {
 };
 ```
 
-### Mo_Algorithm
+### 莫队
 
 ```cpp
 const int B = max(1, int(n / sqrt(q)));
@@ -629,7 +630,7 @@ for (int i = 0, l = 1, r = 0; i < q; i++) {
     ans[id] = cur;
 }
 ```
-### LinearBasis
+### 线性基
 
 ```cpp
 template <class T>
@@ -692,7 +693,7 @@ struct LinearBasis {
 };
 ```
 
-### MInt(Short Version)
+### 取模类(Short Version)
 
 ```cpp
 template <class T>
@@ -896,7 +897,7 @@ auto lca = [&](int x, int y) -> int {
 };
 ```
 
-### HLD
+### 重链剖分
 
 ```cpp
 struct HLD {
@@ -991,7 +992,7 @@ struct HLD {
 };
 ```
 
-### DSU on Tree
+### 树上启发式合并
 
 ```cpp
 vector<int> siz(n + 1), dfn(n + 1), hvy(n + 1), rev(n + 1);
@@ -1085,7 +1086,7 @@ vector<int> g;
 }
 ```
 
-### TreeHash
+### 树哈希
 
 ```cpp
 mt19937_64 rnd(chrono::steady_clock::now().time_since_epoch().count());
@@ -1134,7 +1135,7 @@ struct TreeHash {
 };
 ```
 
-### SCC
+### 强连通分量
 
 ```cpp
 struct SCC {
@@ -1198,7 +1199,7 @@ struct SCC {
 };
 ```
 
-### EBCC
+### 边双
 
 ```cpp
 struct EBCC {
@@ -1285,7 +1286,7 @@ struct EBCC {
 };
 ```
 
-### Hierholzer(无向图)
+### 欧拉回路(无向图)
 
 ```cpp
 // 无向图
@@ -1349,7 +1350,7 @@ vector<int> Hierholzer(vector<vector<int>> adj) {
 }
 ```
 
-### Hierholzer(有向图)
+### 欧拉回路(有向图)
 
 ```cpp
 // 有向图
@@ -1456,7 +1457,7 @@ cout << ans << '\n';
 
 ## 数学
 
-### power
+### 快速幂
 
 ```cpp
 constexpr int mod = 998244353;
@@ -1473,7 +1474,7 @@ i64 power(i64 a, i64 b) {
 }
 ```
 
-### exgcd
+### 扩展欧几里得
 
 ```cpp
 template <class T>
@@ -1571,7 +1572,7 @@ struct FastGCD {
 };
 ```
 
-### divide
+### 上下取整
 
 ```cpp
 template <class T>
@@ -1597,7 +1598,7 @@ T ceil_div(const T &a, const T &b) {
 }
 ```
 
-### sieve
+### 线性筛
 
 ```cpp
 vector<int> prime, minp;
@@ -1624,7 +1625,7 @@ void sieve(int n) {
 }
 ```
 
-### Comb
+### 组合数
 
 ```cpp
 constexpr int mod = 998244353;
@@ -1679,7 +1680,7 @@ struct Comb {
 } comb;
 ```
 
-### Lucas
+### 卢卡斯
 
 ```cpp
 i64 Lucas(i64 n, i64 m) {
@@ -1694,7 +1695,7 @@ i64 Lucas(i64 n, i64 m) {
 }
 ```
 
-### Matrix
+### 矩阵类
 
 ```cpp
 constexpr int N = 2;
@@ -1732,7 +1733,7 @@ T power(T a, i64 b) {
 }
 ```
 
-### gauss
+### 高斯消元
 
 ```cpp
 bool gauss(vector<vector<int>> &a) {
@@ -1766,7 +1767,7 @@ bool gauss(vector<vector<int>> &a) {
 }
 ```
 
-### Polynomial
+### 多项式
 
 ```cpp
 constexpr i64 mod = 998244353;
@@ -2052,7 +2053,7 @@ using Poly = PolyNTT<mod, G>;
 using poly = vector<i64>;
 ```
 
-### Geometry
+### 几何
 
 ```cpp
 using F = long double;
@@ -2261,33 +2262,38 @@ bool pointInPolygon(const Point<T> &a, const vector<Point<T>> &p) {
 
 $$
 C_n = \frac{1}{n+1}\binom{2n}{n}
-    = \binom{2n}{n} - \binom{2n}{n-1}.
+    = \binom{2n}{n} - \binom{2n}{n-1}
 $$
 
 初值与常用递推式：
 
 $$
 C_0 = 1,\qquad
-C_n = \sum_{i=0}^{n-1} C_i C_{n-1-i},\qquad
-C_n = \frac{4n-2}{n+1}C_{n-1}\ (n\geq 1).
+C_n = \sum_{i=0}^{n-1} C_i C_{n-1-i}
+$$
+
+$$
+C_n = \frac{4n-2}{n+1}C_{n-1}\qquad(n\geq 1)
 $$
 
 ### 第二类斯特林数
 
-令 $S(n,k)$ 表示将 $n$ 个不同元素划分为 $k$ 个非空、无标号集合的方案数。
+令 $S_{n,k}$ 表示将 $n$ 个不同元素划分为 $k$ 个非空、无标号集合的方案数。
 
 $$
-S(0,0)=1,\qquad S(n,0)=0\ (n>0),\qquad S(0,k)=0\ (k>0).
+S_{0,0}=1,\qquad S_{n,0}=0\quad(n>0),\qquad S_{0,k}=0\quad(k>0)
 $$
 
-递推式与容斥形式：
+递推式：
 
 $$
-S(n,k)=S(n-1,k-1)+kS(n-1,k),
+S_{n,k}=S_{n-1,k-1}+kS_{n-1,k}
 $$
 
+容斥形式：
+
 $$
-S(n,k)=\frac{1}{k!}\sum_{i=0}^{k}(-1)^{k-i}\binom{k}{i}i^n.
+S_{n,k}=\frac{1}{k!}\sum_{i=0}^{k}(-1)^{k-i}\binom{k}{i}i^n
 $$
 
 ## 字符串
@@ -2331,7 +2337,7 @@ vector<int> KMP(const string &s, const string &t) {
 }
 ```
 
-### z_algorithm
+### Z函数
 
 ```cpp
 vector<int> z_algorithm(const string &s) {
@@ -2351,7 +2357,7 @@ vector<int> z_algorithm(const string &s) {
 }
 ```
 
-### Manacher
+### 马拉车
 
 ```cpp
 vector<int> manacher(const string &s) {
@@ -2377,7 +2383,7 @@ vector<int> manacher(const string &s) {
 }
 ```
 
-### StringHash
+### 字符串哈希
 
 ```cpp
 constexpr u64 mod = (1ull << 61) - 1;
@@ -2418,7 +2424,7 @@ struct StringHash {
 };
 ```
 
-### Trie
+### 字典树
 
 ```cpp
 constexpr int N = 1e6;
@@ -2446,6 +2452,36 @@ void insert(const string &s) {
 }
 ```
 
+### 最小表示法
+
+```cpp
+template <class T>
+int minRotation(const T &s) {
+    int n = s.size();
+    int i = 0, j = 1, k = 0;
+
+    while (i < n && j < n && k < n) {
+        auto a = s[(i + k) % n];
+        auto b = s[(j + k) % n];
+
+        if (a == b) {
+            ++k;
+        } else {
+            if (a > b) {
+                i = i + k + 1;
+                if (i == j) ++i;
+            } else {
+                j = j + k + 1;
+                if (i == j) ++j;
+            }
+            k = 0;
+        }
+    }
+
+    return min(i, j);
+}
+```
+
 ## 其他
 
 ### change
@@ -2470,7 +2506,7 @@ bool chmax(T &a, const T &b) {
 }
 ```
 
-### hash
+### 自定义哈希
 
 ```cpp
 template <class T>
@@ -2494,7 +2530,7 @@ struct Hash {
 unordered_map<array<int, 2>, int, Hash> M;
 ```
 
-### random
+### 随机数
 
 ```cpp
 mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
