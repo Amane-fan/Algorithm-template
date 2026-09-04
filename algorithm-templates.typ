@@ -260,6 +260,7 @@
 #template("高斯消元", "Math/gauss.cpp")
 #template("多项式", "Math/Polynomial.cpp")
 #template("几何", "Math/Geometry.cpp")
+#template("快速质数测试&质因数分解", "Math/Pollard-Rho.cpp")
 
 == 卡特兰数
 
