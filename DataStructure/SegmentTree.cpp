@@ -60,7 +60,7 @@ struct SegmentTree {
         return prod(1, 1, n, l, r);
     }
     template<class F>
-    int minLeft(int id, int l, int r, int x, int y, F &&pred) {
+    int findFirst(int id, int l, int r, int x, int y, F &&pred) {
         if (x > r || y < l) {
             return -1;
         }
@@ -71,18 +71,18 @@ struct SegmentTree {
             return l;
         }
         int mid = (l + r) >> 1;
-        int res = minLeft(id * 2, l, mid, x, y, pred);
+        int res = findFirst(id * 2, l, mid, x, y, pred);
         if (res == -1) {
-            res = minLeft(id * 2 + 1, mid + 1, r, x, y, pred);
+            res = findFirst(id * 2 + 1, mid + 1, r, x, y, pred);
         }
         return res;
     }
     template<class F>
-    int minLeft(int l, int r, F &&pred) {
-        return minLeft(1, 1, n, l, r, pred);
+    int findFirst(int l, int r, F &&pred) {
+        return findFirst(1, 1, n, l, r, pred);
     }
     template<class F>
-    int maxRight(int id, int l, int r, int x, int y, F &&pred) {
+    int findLast(int id, int l, int r, int x, int y, F &&pred) {
         if (x > r || y < l) {
             return -1;
         }
@@ -93,15 +93,15 @@ struct SegmentTree {
             return l;
         }
         int mid = (l + r) >> 1;
-        int res = maxRight(id * 2 + 1, mid + 1, r, x, y, pred);
+        int res = findLast(id * 2 + 1, mid + 1, r, x, y, pred);
         if (res == -1) {
-            res = maxRight(id * 2, l, mid, x, y, pred);
+            res = findLast(id * 2, l, mid, x, y, pred);
         }
         return res;
     }
     template<class F>
-    int maxRight(int l, int r, F &&pred) {
-        return maxRight(1, 1, n, l, r, pred);
+    int findLast(int l, int r, F &&pred) {
+        return findLast(1, 1, n, l, r, pred);
     }
 };
 
