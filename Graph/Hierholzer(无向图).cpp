@@ -1,59 +1,82 @@
-// 无向图
-vector<int> Hierholzer(vector<vector<int>> adj) {
-    int n = int(adj.size()) - 1;
-    int odd = 0;
-    vector<int> deg(n + 1);
-    for (int u = 1; u <= n; u++) {
-        for (auto v : adj[u]) {
-            deg[u]++;
-            if (u == v) {
-                deg[u]++;
-            }
-        }
-    }
-    int s = 0;
-    for (int i = n; i >= 1; i--) {
-        if (deg[i] & 1) {
-            odd++;
-            s = i;
-        }
-
-        if (s == 0 && deg[i] != 0) {
-            s = i;
-        }
+array<vector<int>, 2> Hierholzer(const vector<vector<array<int, 2>>> &g) {
+    int n = g.size() - 1;
+    if (n == 0) {
+        return {vector<int>(), vector<int>()};
     }
 
-    if (odd != 0 && odd != 2) {
-        return {};
+    int m = 0;
+    for (int u = 1; u <= n; ++u) {
+        m += g[u].size();
+    }
+    m /= 2;
+
+    int begin = 1;
+    for (int u = 2; u <= n; ++u) {
+        if (g[begin].size() == 0 && g[u].size() != 0) {
+            begin = u;
+        } else if (g[begin].size() % 2 != 1 && g[u].size() % 2 == 1) {
+            begin = u;
+        }
     }
 
     vector<int> path;
-    vector<int> stk;
-    stk.push_back(s);
+    vector<int> edge;
+    vector<int> idx(n + 1, 0);
+    vector<int> vis(m + 1, 0);
 
-    while (!stk.empty()) {
-        int u = stk.back();
-        if (adj[u].empty()) {
-            path.push_back(u);
-            stk.pop_back();
-        } else {
-            int v = adj[u].back();
-            adj[u].pop_back();
-            auto it = find(adj[v].begin(), adj[v].end(), u);
-            if (it != adj[v].end()) {
-                *it = adj[v].back();
-                adj[v].pop_back();
+    auto dfs = [&](auto &&self, int u, int e) -> void {
+        while (idx[u] < g[u].size()) {
+            auto [v, e_] = g[u][idx[u]];
+            ++idx[u];
+
+            if (!vis[e_]) {
+                vis[e_] = 1;
+                self(self, v, e_);
             }
-            stk.push_back(v);
         }
-    }
 
-    for (int u = 1; u <= n; u++) {
-        if (!adj[u].empty()) {
-            return {};
-        }
-    }
+        path.push_back(u);
+        edge.push_back(e);
+    };
+
+    dfs(dfs, begin, 0);
+
+    edge.pop_back();
 
     reverse(path.begin(), path.end());
-    return path;
+    reverse(edge.begin(), edge.end());
+
+    return {path, edge};
+}
+
+bool check(const vector<vector<array<int, 2>>> &g, const vector<int> &path) {
+    int n = g.size() - 1;
+    int m = 0;
+
+    vector<map<int, int>> num(n + 1);
+
+    for (int u = 1; u <= n; ++u) {
+        for (auto [v, w] : g[u]) {
+            num[u][v] += 1;
+            m += 1;
+        }
+    }
+    m /= 2;
+
+    int ps = path.size();
+
+    for (int i = 0; i + 1 < ps; ++i) {
+        int u = path[i];
+        int v = path[i + 1];
+
+        if (u < 1 || u > n || v < 1 || v > n || num[u][v] == 0) {
+            return false;
+        }
+
+        num[u][v] -= 1;
+        num[v][u] -= 1;
+        m -= 1;
+    }
+
+    return m == 0;
 }
