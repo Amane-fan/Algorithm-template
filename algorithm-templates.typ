@@ -434,6 +434,19 @@ $
 #template("change", "others/change.cpp")
 #template("自定义哈希", "others/hash.cpp")
 #template("随机数", "others/random.cpp")
+#template("对拍", "others/test.cpp")
+#template("编译脚本", "others/run.sh")
+
+== 预编译万能头
+- 创建 ./include/pch.hpp
+- 写入如下代码:
+`#pragma once`
+
+`#include <bits/stdc++.h>`
+
+- `cd ./include && g++ -std=c++20 pch.hpp -o pch.hpp.gch`
+
+- 后续编译其他代码时，加入 `-include "./include/pch.hpp"` 参数即可
 
 == std::bitset 使用
 `std::bitset` 常用成员函数
