@@ -431,11 +431,11 @@ $
 #template("最小表示法", "String/minRotation.cpp")
 
 #category("05", "其他")
-#template("change", "others/change.cpp")
-#template("自定义哈希", "others/hash.cpp")
-#template("随机数", "others/random.cpp")
-#template("对拍", "others/test.cpp")
-#template("编译脚本", "others/run.sh")
+#template("change", "Others/change.cpp")
+#template("自定义哈希", "Others/hash.cpp")
+#template("随机数", "Others/random.cpp")
+#template("对拍", "Others/test.cpp")
+#template("编译脚本", "Others/run.sh")
 
 == 预编译万能头
 - 创建 ./include/pch.hpp
@@ -484,4 +484,4 @@ $
 
 - 计算区间 `[l, r]` 中 `1` 的个数: `(b >> l).count() - (b >> (r + 1)).count() `
 
-#template("i128重载输入输出", "others/i128.cpp")
+#template("i128重载输入输出", "Others/i128.cpp")
