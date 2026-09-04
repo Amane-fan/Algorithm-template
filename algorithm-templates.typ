@@ -230,6 +230,7 @@
 #template("莫队", "DataStructure/Mo_Algorithm.cpp")
 #template("线性基", "DataStructure/LinearBasis.cpp")
 #template("取模类(Short Version)", "DataStructure/MInt(Short Version).cpp")
+#template("分数类", "DataStructure/Frac.cpp")
 
 #category("02", "图论")
 #template("Dijkstra", "Graph/Dijkstra.cpp")
@@ -285,6 +286,142 @@ $ S_(n, k) = S_(n - 1, k - 1) + k S_(n - 1, k) $
 
 $ S_(n, k) = 1 / k! sum_(i = 0)^k (-1)^(k - i) binom(k, i) i^n $
 
+== 组合数恒等式
+
+=== Pascal 恒等式
+
+$
+binom(n, k)
+=
+binom(n-1, k)
++
+binom(n-1, k-1)
+$
+
+=== 一行组合数之和
+$
+sum_(k=0)^n binom(n, k) = 2^n
+$
+
+$
+sum_(k=0)^n binom(n, k) x^k
+=
+(1+x)^n
+$
+
+=== 交错和
+
+当 $n > 0$ 时：
+
+$
+sum_(k=0)^n (-1)^k binom(n, k)
+=
+0
+$
+
+=== Hockey-stick 恒等式
+
+$
+sum_(i=k)^n binom(i, k)
+=
+binom(n+1, k+1)
+$
+
+$
+sum_(i=0)^n binom(r+i, r)
+=
+binom(r+n+1, r+1)
+$
+
+=== Vandermonde 恒等式
+
+$
+sum_k
+binom(n, k)
+binom(m, r-k)
+=
+binom(n+m, r)
+$
+
+$
+sum_(k=0)^r
+binom(n, k)
+binom(n, r-k)
+=
+binom(2n, r)
+$
+
+=== 平方和恒等式
+
+$
+sum_(k=0)^n binom(n, k)^2
+=
+binom(2n, n)
+$
+
+=== 带 $k$ 的组合数
+
+$
+k binom(n, k)
+=
+n binom(n-1, k-1)
+$
+
+$
+sum_(k=0)^n
+k binom(n, k)
+=
+n 2^(n-1)
+$
+
+=== 带 $k(k-1)$ 的组合数
+
+$
+k(k-1) binom(n, k)
+=
+n(n-1) binom(n-2, k-2)
+$
+
+$
+sum_(k=0)^n
+k(k-1) binom(n, k)
+=
+n(n-1) 2^(n-2)
+$
+
+$
+k^2 = k(k-1) + k
+$
+
+$
+sum_(k=0)^n
+k^2 binom(n, k)
+=
+n(n+1) 2^(n-2)
+$
+
+=== 吸收恒等式
+
+$
+binom(n, k) binom(k, r)
+=
+binom(n, r) binom(n-r, k-r)
+$
+
+$
+binom(n, k) binom(n-k, r)
+=
+binom(n, r) binom(n-r, k)
+$
+
+=== 相邻组合数之比
+
+$
+binom(n, k+1) / binom(n, k)
+=
+(n-k)/(k+1)
+$
+
 #category("04", "字符串")
 #template("KMP", "String/KMP.cpp")
 #template("Z函数", "String/z_algorithm.cpp")
@@ -297,3 +434,39 @@ $ S_(n, k) = 1 / k! sum_(i = 0)^k (-1)^(k - i) binom(k, i) i^n $
 #template("change", "others/change.cpp")
 #template("自定义哈希", "others/hash.cpp")
 #template("随机数", "others/random.cpp")
+
+== std::bitset 使用
+`std::bitset` 常用成员函数
+
+- `count()`: 返回 `true` 的数量。
+- `size()`: 返回 `bitset` 的大小。
+- `test(pos)`: 它和 `vector` 中的 `at()` 的作用类似，与 `[]` 运算符的区别在于会进行越界检查。
+- `any()`: 若存在某一位是 `true`，则返回 `true`，否则返回 `false`。
+- `none()`: 若所有位都是 `false`，则返回 `true`，否则返回 `false`。
+- `all()`: 若所有位都是 `true`，则返回 `true`，否则返回 `false`。
+
+- `set()`: 将整个 `bitset` 设置成 `true`。
+- `set(pos, val = true)`: 将某一位设置成 `true` 或 `false`。
+
+- `reset()`: 将整个 `bitset` 设置成 `false`。
+- `reset(pos)`: 将某一位设置成 `false`，相当于 `set(pos, false)`。
+
+- `flip()`: 翻转每一位，即 $0 arrow.l.r 1$。相当于异或一个全部为 `1` 的 `bitset`。
+- `flip(pos)`: 翻转某一位。
+
+- `to_string()`: 返回转换后的字符串表示。
+- `to_ulong()`: 返回转换后的 `unsigned long` 表示。
+
+  `long` 在 Windows NT 及 32 位 POSIX 系统下通常与 `int` 大小相同，
+  在 64 位 POSIX 系统下通常与 `long long` 大小相同。
+
+- `to_ullong()`: 从 *C++11* 起支持，返回转换后的 `unsigned long long` 表示。
+
+- `_Find_first()`: 返回 `bitset` 中第一个为 `true` 的位置的下标。
+  若不存在 `true`，则返回 `bitset` 的大小。
+
+- `_Find_next(pos)`: 返回 `pos` 后面，即下标严格大于 `pos` 的位置中，
+  第一个为 `true` 的位置的下标。
+  若 `pos` 后面不存在 `true`，则返回 `bitset` 的大小。
+
+- 计算区间 `[l, r]` 中 `1` 的个数: `(b >> l).count() - (b >> (r + 1)).count() `
