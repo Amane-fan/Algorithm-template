@@ -231,6 +231,7 @@
 #template("线性基", "DataStructure/LinearBasis.cpp")
 #template("取模类(Short Version)", "DataStructure/MInt(Short Version).cpp")
 #template("分数类", "DataStructure/Frac.cpp")
+#template("高精度", "DataStructure/BigInt.cpp")
 
 #category("02", "图论")
 #template("Dijkstra", "Graph/Dijkstra.cpp")
