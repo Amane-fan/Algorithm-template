@@ -483,3 +483,5 @@ $
   若 `pos` 后面不存在 `true`，则返回 `bitset` 的大小。
 
 - 计算区间 `[l, r]` 中 `1` 的个数: `(b >> l).count() - (b >> (r + 1)).count() `
+
+#template("i128重载输入输出", "others/i128.cpp")
