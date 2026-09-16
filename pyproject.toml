@@ -1,0 +1,12 @@
+[project]
+name = "algorithm-templates"
+version = "0.1.0"
+description = "Build Markdown and Typst books from algorithm templates."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mistune==3.2.0",
+]
+
+[tool.uv]
+package = false

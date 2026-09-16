@@ -1,0 +1,4 @@
+# Generated Markdown preserves whitespace from the source code verbatim.
+/templates.md linguist-generated=true whitespace=-blank-at-eol
+# Preserve original template bytes when moving them, including line endings.
+/templates/** -text

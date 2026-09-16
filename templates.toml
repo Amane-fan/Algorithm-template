@@ -1,0 +1,51 @@
+# 路径相对于本配置文件；aliases / order / exclude 中的路径相对于 source。
+source = "templates"
+output = "."
+
+# 同时从 Markdown 和 Typst 排除；支持 *, ?, **，目录名以 / 结尾。
+# 例如：["Others/test.cpp", "**/draft*", "Java/"]
+exclude = ["Java/"]
+
+[book]
+title = "Amane の Templates"
+subtitle = "Algorithms & Data Structures"
+author = "Amane"
+
+[cover]
+# 相对于配置文件的位置，支持 PNG / JPEG / SVG；留空使用简洁文字封面。
+image = ""
+
+[layout]
+paper = "a4"
+font = ["Noto Sans SC", "Microsoft YaHei"]
+code_font = ["Maple Mono", "Noto Sans SC"]
+body_size = 9.5
+code_size = 8.0
+code_leading = 2.2
+keep_short_code_lines = 28
+margin_top = 17
+margin_bottom = 17
+margin_inside = 18
+margin_outside = 14
+accent = "315C61"
+toc_columns = 2
+section_new_page = false
+
+[aliases]
+# "DataStructure" = "数据结构"
+# "DataStructure/SegmentTree.cpp" = "线段树"
+
+[order]
+# 键为目录路径，"." 代表模板根目录；值为其直接子项的原始名称。
+# 未列出的子项按名称自然排序，目录优先，新文件自动收录。
+# "." = ["DataStructure", "Graph", "Math", "String", "Java", "Others"]
+# "DataStructure" = ["DSU.cpp", "Fenwick.cpp", "SegmentTree.cpp"]
+
+[languages]
+# 可扩展后缀到 Typst / Markdown 高亮语言的映射。
+# 未配置的文本文件会以普通代码块展示，并输出提示；图片不作为模块收录。
+# ".rs" = "rust"
+
+[toolchain]
+# 留空自动寻找 PATH 中的 typst / tinymist，或 VS Code 的 Tinymist 扩展。
+compiler = ""

@@ -1,3 +1,14 @@
 .codex
 *.pdf
 .agents
+.cache/
+tmp/
+dist/
+__pycache__/
+*.py[cod]
+.venv/
+.templatebook-*/
+.templatebook-publish-*.pdf
+.templatebook-*.typ
+.templatebook-*.tmTheme
+/templates.typ

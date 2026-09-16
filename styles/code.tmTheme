@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>name</key><string>Template Book</string>
+  <key>settings</key><array>
+    <dict><key>settings</key><dict><key>foreground</key><string>#202B30</string><key>background</key><string>#FFFFFF</string></dict></dict>
+    <dict><key>scope</key><string>comment</string><key>settings</key><dict><key>foreground</key><string>#657275</string></dict></dict>
+    <dict><key>scope</key><string>keyword, storage</string><key>settings</key><dict><key>foreground</key><string>#315C61</string></dict></dict>
+    <dict><key>scope</key><string>string</string><key>settings</key><dict><key>foreground</key><string>#725437</string></dict></dict>
+    <dict><key>scope</key><string>constant.numeric, constant.language</string><key>settings</key><dict><key>foreground</key><string>#77536F</string></dict></dict>
+    <dict><key>scope</key><string>entity.name, support.type, support.function</string><key>settings</key><dict><key>foreground</key><string>#354F74</string></dict></dict>
+  </array>
+</dict></plist>
