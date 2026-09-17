@@ -2,193 +2,1166 @@
 
 # Amane の Templates
 
-<a id="module-e585b6e4bb96"></a>
+<a id="module-e695b0e68daee7bb93e69e84"></a>
 
-## 其他
+## 数据结构
 
-<a id="module-e585b6e4bb962f6368616e67652e637070"></a>
+<a id="module-e695b0e68daee7bb93e69e842f426967496e742e637070"></a>
 
-### change
+### BigInt
 
 ```cpp
-template <class T>
-bool chmin(T &a, const T &b) {
-	if (b < a) {
-		a = b;
-		return true;
-	}
-	return false;
-}
+struct BigInt {
+    vector<int> a;  // 低位在前
 
-template <class T>
-bool chmax(T &a, const T &b) {
-	if (b > a) {
-		a = b;
-		return true;
-	}
-	return false;
-}
+    BigInt(long long x = 0) {
+        *this = x;
+    }
+
+    BigInt(const string &s) {
+        *this = s;
+    }
+
+    // long long -> BigInt
+    BigInt& operator=(long long x) {
+        a.clear();
+
+        if (x == 0) {
+            a.push_back(0);
+            return *this;
+        }
+
+        while (x) {
+            a.push_back(x % 10);
+            x /= 10;
+        }
+
+        return *this;
+    }
+
+    // string -> BigInt
+    BigInt& operator=(const string &s) {
+        a.clear();
+
+        for (int i = (int)s.size() - 1; i >= 0; i--)
+            a.push_back(s[i] - '0');
+
+        trim();
+        return *this;
+    }
+
+    // 去除前导 0
+    void trim() {
+        while (a.size() > 1 && a.back() == 0)
+            a.pop_back();
+    }
+
+    // 比较
+    friend bool operator<(const BigInt &A, const BigInt &B) {
+        if (A.a.size() != B.a.size())
+            return A.a.size() < B.a.size();
+
+        for (int i = (int)A.a.size() - 1; i >= 0; i--)
+            if (A.a[i] != B.a[i])
+                return A.a[i] < B.a[i];
+
+        return false;
+    }
+
+    friend bool operator>(const BigInt &A, const BigInt &B) {
+        return B < A;
+    }
+
+    friend bool operator<=(const BigInt &A, const BigInt &B) {
+        return !(B < A);
+    }
+
+    friend bool operator>=(const BigInt &A, const BigInt &B) {
+        return !(A < B);
+    }
+
+    friend bool operator==(const BigInt &A, const BigInt &B) {
+        return A.a == B.a;
+    }
+
+    friend bool operator!=(const BigInt &A, const BigInt &B) {
+        return !(A == B);
+    }
+
+    // 加法
+    friend BigInt operator+(const BigInt &A, const BigInt &B) {
+        BigInt C;
+        C.a.clear();
+
+        int t = 0;
+
+        for (int i = 0;
+             i < A.a.size() || i < B.a.size() || t;
+             i++) {
+
+            if (i < A.a.size()) t += A.a[i];
+            if (i < B.a.size()) t += B.a[i];
+
+            C.a.push_back(t % 10);
+            t /= 10;
+        }
+
+        return C;
+    }
+
+    // 减法，要求 A >= B
+    friend BigInt operator-(const BigInt &A, const BigInt &B) {
+        BigInt C;
+        C.a.clear();
+
+        int t = 0;
+
+        for (int i = 0; i < A.a.size(); i++) {
+            t = A.a[i] - t;
+
+            if (i < B.a.size())
+                t -= B.a[i];
+
+            C.a.push_back((t + 10) % 10);
+            t = (t < 0);
+        }
+
+        C.trim();
+        return C;
+    }
+
+    // 大整数 * 大整数
+    friend BigInt operator*(const BigInt &A, const BigInt &B) {
+        BigInt C;
+        C.a.assign(A.a.size() + B.a.size(), 0);
+
+        for (int i = 0; i < A.a.size(); i++)
+            for (int j = 0; j < B.a.size(); j++)
+                C.a[i + j] += A.a[i] * B.a[j];
+
+        for (int i = 0; i + 1 < C.a.size(); i++) {
+            C.a[i + 1] += C.a[i] / 10;
+            C.a[i] %= 10;
+        }
+
+        C.trim();
+        return C;
+    }
+
+    // 大整数 * int
+    friend BigInt operator*(const BigInt &A, int b) {
+        BigInt C;
+        C.a.clear();
+
+        long long t = 0;
+
+        for (int i = 0; i < A.a.size() || t; i++) {
+            if (i < A.a.size())
+                t += 1LL * A.a[i] * b;
+
+            C.a.push_back(t % 10);
+            t /= 10;
+        }
+
+        C.trim();
+        return C;
+    }
+
+    friend BigInt operator*(int b, const BigInt &A) {
+        return A * b;
+    }
+
+    // 大整数 / int
+    friend BigInt operator/(const BigInt &A, int b) {
+        BigInt C;
+        C.a.clear();
+
+        long long r = 0;
+
+        for (int i = (int)A.a.size() - 1; i >= 0; i--) {
+            r = r * 10 + A.a[i];
+            C.a.push_back(r / b);
+            r %= b;
+        }
+
+        reverse(C.a.begin(), C.a.end());
+        C.trim();
+
+        return C;
+    }
+
+    // 大整数 % int
+    friend int operator%(const BigInt &A, int b) {
+        long long r = 0;
+
+        for (int i = (int)A.a.size() - 1; i >= 0; i--)
+            r = (r * 10 + A.a[i]) % b;
+
+        return r;
+    }
+
+    // 输入
+    friend istream& operator>>(istream &in, BigInt &x) {
+        string s;
+        in >> s;
+        x = s;
+        return in;
+    }
+
+    // 输出
+    friend ostream& operator<<(ostream &out, const BigInt &x) {
+        for (int i = (int)x.a.size() - 1; i >= 0; i--)
+            out << x.a[i];
+
+        return out;
+    }
+};
 ```
 
-<a id="module-e585b6e4bb962f686173682e637070"></a>
+<a id="module-e695b0e68daee7bb93e69e842f626974736574e4bdbfe794a82e747970"></a>
 
-### hash
+### bitset使用
+
+```typst
+`std::bitset` 常用成员函数
+
+- `count()`: 返回 `true` 的数量。
+- `size()`: 返回 `bitset` 的大小。
+- `test(pos)`: 它和 `vector` 中的 `at()` 的作用类似，与 `[]` 运算符的区别在于会进行越界检查。
+- `any()`: 若存在某一位是 `true`，则返回 `true`，否则返回 `false`。
+- `none()`: 若所有位都是 `false`，则返回 `true`，否则返回 `false`。
+- `all()`: 若所有位都是 `true`，则返回 `true`，否则返回 `false`。
+
+- `set()`: 将整个 `bitset` 设置成 `true`。
+- `set(pos, val = true)`: 将某一位设置成 `true` 或 `false`。
+
+- `reset()`: 将整个 `bitset` 设置成 `false`。
+- `reset(pos)`: 将某一位设置成 `false`，相当于 `set(pos, false)`。
+
+- `flip()`: 翻转每一位，即 $0 arrow.l.r 1$。相当于异或一个全部为 `1` 的 `bitset`。
+- `flip(pos)`: 翻转某一位。
+
+- `to_string()`: 返回转换后的字符串表示。
+- `to_ulong()`: 返回转换后的 `unsigned long` 表示。
+
+  `long` 在 Windows NT 及 32 位 POSIX 系统下通常与 `int` 大小相同，
+  在 64 位 POSIX 系统下通常与 `long long` 大小相同。
+
+- `to_ullong()`: 从 *C++11* 起支持，返回转换后的 `unsigned long long` 表示。
+
+- `_Find_first()`: 返回 `bitset` 中第一个为 `true` 的位置的下标。
+  若不存在 `true`，则返回 `bitset` 的大小。
+
+- `_Find_next(pos)`: 返回 `pos` 后面，即下标严格大于 `pos` 的位置中，
+  第一个为 `true` 的位置的下标。
+  若 `pos` 后面不存在 `true`，则返回 `bitset` 的大小。
+
+- 计算区间 `[l, r]` 中 `1` 的个数: `(b >> l).count() - (b >> (r + 1)).count() `
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f4453552e637070"></a>
+
+### DSU
+
+```cpp
+struct DSU {
+    vector<int> p, siz;
+    DSU() {}
+    DSU(int n) {
+        init(n);
+    }
+    void init(int n) {
+        p.resize(n + 1);
+        iota(p.begin(), p.end(), 0);
+        siz.assign(n + 1, 1);
+    }
+    int find(int x) {
+        if (x != p[x]) {
+            p[x] = find(p[x]);
+        }
+        return p[x];
+    }
+    bool merge(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x == y) return false;
+        siz[x] += siz[y];
+        p[y] = x;
+        return true;
+    }
+    int size(int x) {
+        return siz[find(x)];
+    }
+    bool same(int x, int y) {
+        return find(x) == find(y);
+    }
+};
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f46656e7769636b2e637070"></a>
+
+### Fenwick
 
 ```cpp
 template <class T>
-void hash_combine(size_t& seed, const T& v) {
-    seed ^= hash<T>{}(v) 
-          + 0x9e3779b97f4a7c15ULL 
-          + (seed << 6) 
-          + (seed >> 2);
-}
+struct Fenwick {
+    int n;
+    vector<T> a;
+    Fenwick() {}
+    Fenwick(int N): n(N), a(N + 1) {}
+    void add(int x, const T &v) {
+        for (int i = x; i <= n; i += (i & -i)) {
+            a[i] = a[i] + v;
+        }
+    }
+    void set(int x, const T &v) {
+        add(x, v - sum(x, x));
+    }
+    T sum(int x) {
+        T ans{};
+        for (int i = x; i > 0; i -= (i & -i)) {
+            ans = ans + a[i];
+        }
+        return ans;
+    }
+    T sum(int l, int r) {
+        if (l > r) {
+            return T{0};
+        }
+        return sum(r) - sum(l - 1);
+    }
+    int lower_bound(T v) {
+        int x = 0;
+        for (int i = 1 << __lg(n); i > 0; i >>= 1) {
+            if (x + i <= n && a[x + i] < v) {
+                x += i;
+                v = v - a[x];
+            }
+        }
+        return x + 1;
+    }
+    int upper_bound(T v) {
+        int x = 0;
+        for (int i = 1 << __lg(n); i > 0; i >>= 1) {
+            if (x + i <= n && a[x + i] <= v) {
+                x += i;
+                v = v - a[x];
+            }
+        }
+        return x + 1;
+    }
+};
+```
 
-struct Hash {
-    size_t operator()(const array<int, 2> &a) const {
-        size_t res = 0;
-        for (auto &e : a) {
-            hash_combine(res, e);
+<a id="module-e695b0e68daee7bb93e69e842f467261632e637070"></a>
+
+### Frac
+
+```cpp
+template<class T>
+struct Frac {
+    T num;
+    T den;
+    Frac(T num_, T den_) : num(num_), den(den_) {
+        if (den < 0) {
+            den = -den;
+            num = -num;
+        }
+    }
+    Frac() : Frac(0, 1) {}
+    Frac(T num_) : Frac(num_, 1) {}
+    explicit operator double() const {
+        return 1. * num / den;
+    }
+    Frac &operator+=(const Frac &rhs) {
+        num = num * rhs.den + rhs.num * den;
+        den *= rhs.den;
+        return *this;
+    }
+    Frac &operator-=(const Frac &rhs) {
+        num = num * rhs.den - rhs.num * den;
+        den *= rhs.den;
+        return *this;
+    }
+    Frac &operator*=(const Frac &rhs) {
+        num *= rhs.num;
+        den *= rhs.den;
+        return *this;
+    }
+    Frac &operator/=(const Frac &rhs) {
+        num *= rhs.den;
+        den *= rhs.num;
+        if (den < 0) {
+            num = -num;
+            den = -den;
+        }
+        return *this;
+    }
+    friend Frac operator+(Frac lhs, const Frac &rhs) {
+        return lhs += rhs;
+    }
+    friend Frac operator-(Frac lhs, const Frac &rhs) {
+        return lhs -= rhs;
+    }
+    friend Frac operator*(Frac lhs, const Frac &rhs) {
+        return lhs *= rhs;
+    }
+    friend Frac operator/(Frac lhs, const Frac &rhs) {
+        return lhs /= rhs;
+    }
+    friend Frac operator-(const Frac &a) {
+        return Frac(-a.num, a.den);
+    }
+    friend bool operator==(const Frac &lhs, const Frac &rhs) {
+        return lhs.num * rhs.den == rhs.num * lhs.den;
+    }
+    friend bool operator!=(const Frac &lhs, const Frac &rhs) {
+        return lhs.num * rhs.den != rhs.num * lhs.den;
+    }
+    friend bool operator<(const Frac &lhs, const Frac &rhs) {
+        return lhs.num * rhs.den < rhs.num * lhs.den;
+    }
+    friend bool operator>(const Frac &lhs, const Frac &rhs) {
+        return lhs.num * rhs.den > rhs.num * lhs.den;
+    }
+    friend bool operator<=(const Frac &lhs, const Frac &rhs) {
+        return lhs.num * rhs.den <= rhs.num * lhs.den;
+    }
+    friend bool operator>=(const Frac &lhs, const Frac &rhs) {
+        return lhs.num * rhs.den >= rhs.num * lhs.den;
+    }
+    friend ostream &operator<<(ostream &os, Frac x) {
+        T g = gcd(x.num, x.den);
+        if (x.den == g) {
+            return os << x.num / g;
+        } else {
+            return os << x.num / g << "/" << x.den / g;
+        }
+    }
+};
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f4c617a795365676d656e74547265652e637070"></a>
+
+### LazySegmentTree
+
+```cpp
+template <class Info, class Tag>
+struct LazySegmentTree {
+    int n;
+    vector<Info> info;
+    vector<Tag> tag;
+    LazySegmentTree(): n(0) {}
+    LazySegmentTree(int N, Info v = Info()) {
+        init(vector<Info>(N + 1, v));
+    }
+    LazySegmentTree(const vector<Info> &a) {
+        init(a);
+    }
+    void init(const vector<Info> &a) {
+        n = int(a.size()) - 1;
+        info.assign(n << 2, Info());
+        tag.assign(n << 2, Tag());
+        auto build = [&](auto &&self, int id, int l, int r) {
+            if (l == r) {
+                info[id] = a[l];
+                return;
+            }
+            int mid = (l + r) >> 1;
+            self(self, id * 2, l, mid);
+            self(self, id * 2 + 1, mid + 1, r);
+            pushUp(id);
+        };
+        build(build, 1, 1, n);
+    }
+    void apply(int id, const Tag &t) {
+        info[id].apply(t);
+        tag[id].apply(t);
+    }
+    void pushDown(int id) {
+        apply(id * 2, tag[id]);
+        apply(id * 2 + 1, tag[id]);
+        tag[id] = Tag();
+    }
+    void pushUp(int id) {
+        info[id] = info[id * 2] + info[id * 2 + 1];
+    }
+    void set(int id, int l, int r, int x, const Info &v) {
+        if (l == r) {
+            info[id] = v;
+            return;
+        }
+        int mid = (l + r) >> 1;
+        pushDown(id);
+        if (x <= mid){
+            set(id * 2, l, mid, x, v);
+        } else {
+            set(id * 2 + 1, mid + 1, r, x, v);
+        }
+        pushUp(id);
+    }
+    void set(int x, const Info &v) {
+        set(1, 1, n, x, v);
+    }
+    Info get(int x) {
+        return prod(x, x);
+    }
+    Info prod(int id, int l, int r, int x, int y) {
+        if (x > r || y < l) {
+            return Info();
+        }
+        if (x <= l && y >= r) {
+            return info[id];
+        }
+        pushDown(id);
+        int mid = (l + r) >> 1;
+        return prod(id * 2, l, mid, x, y) + prod(id * 2 + 1, mid + 1, r, x, y);
+    }
+    Info prod(int l, int r) {
+        return prod(1, 1, n, l, r);
+    }
+    void apply(int id, int l, int r, int x, int y, const Tag &t) {
+        if (x > r || y < l) {
+            return;
+        }
+        if (x <= l && y >= r) {
+            apply(id, t);
+            return;
+        }
+        pushDown(id);
+        int mid = (l + r) >> 1;
+        apply(id * 2, l, mid, x, y, t);
+        apply(id * 2 + 1, mid + 1, r, x, y, t);
+        pushUp(id);
+    }
+    void apply(int l, int r, const Tag &t) {
+        apply(1, 1, n, l, r, t);
+    }
+    template<class F>
+    int findFirst(int id, int l, int r, int x, int y, F &&pred) {
+        if (x > r || y < l) {
+            return -1;
+        }
+        if (x <= l && y >= r && !pred(info[id])) {
+            return -1;
+        }
+        if (l == r) {
+            return l;
+        }
+        pushDown(id);
+        int mid = (l + r) >> 1;
+        int res = findFirst(id * 2, l, mid, x, y, pred);
+        if (res == -1) {
+            res = findFirst(id * 2 + 1, mid + 1, r, x, y, pred);
         }
         return res;
-    };
+    }
+    template<class F>
+    int findFirst(int l, int r, F &&pred) {
+        return findFirst(1, 1, n, l, r, pred);
+    }
+    template<class F>
+    int findLast(int id, int l, int r, int x, int y, F &&pred) {
+        if (x > r || y < l) {
+            return -1;
+        }
+        if (x <= l && y >= r && !pred(info[id])) {
+            return -1;
+        }
+        if (l == r) {
+            return l;
+        }
+        pushDown(id);
+        int mid = (l + r) >> 1;
+        int res = findLast(id * 2 + 1, mid + 1, r, x, y, pred);
+        if (res == -1) {
+            res = findLast(id * 2, l, mid, x, y, pred);
+        }
+        return res;
+    }
+    template<class F>
+    int findLast(int l, int r, F &&pred) {
+        return findLast(1, 1, n, l, r, pred);
+    }
 };
 
-unordered_map<array<int, 2>, int, Hash> M;
+struct Tag {
+    bool status;
+
+    Tag(): status(false) {}
+
+    void apply(const Tag &t) {
+        if (!t.status) {
+            return;
+        }
+        if (!status) {
+            *this = t;
+            return;
+        }
+
+    }
+};
+
+struct Info {
+    bool status;
+
+    Info(): status(false) {}
+    
+    void apply(const Tag &t) {
+        if (!t.status) {
+            return;
+        }
+        
+    }
+
+    friend Info operator+(const Info &a, const Info &b) {
+        if (!a.status) {
+            return b;
+        }
+        if (!b.status) {
+            return a;
+        }
+        Info c;
+        c.status = true;
+
+        
+
+        return c;
+    }
+
+};
 ```
 
-<a id="module-e585b6e4bb962f693132382e637070"></a>
+<a id="module-e695b0e68daee7bb93e69e842f4c694368616f547265652e637070"></a>
 
-### i128
+### LiChaoTree
 
 ```cpp
-using i128 = __int128;
-istream& operator>>(istream& is, i128& n) {
-    string s;
-    is >> s;
-    n = 0;
-    bool negative = !s.empty() && s[0] == '-';
-    for(size_t i = negative || (!s.empty() && s[0] == '+'); i < s.size(); i++)
-        n = n * 10 + (negative ? -(s[i] - '0') : s[i] - '0');
-    return is;
+constexpr i64 inf = 2e18;
+template <class T>
+struct LiChaoTree {
+	struct Line {
+		T a, b;
+		Line(): a(0), b(-inf) {
+		}
+		Line(T a, T b): a(a), b(b) {
+		}
+		T get(T x) {
+			return a * x + b;
+		}
+	};
+	int N;
+	vector<T> x;
+	vector<Line> ST;
+	LiChaoTree() {}
+	LiChaoTree(const vector<T> &x2) {
+		x = x2;
+		sort(x.begin(), x.end());
+		x.erase(unique(x.begin(), x.end()), x.end());
+		int N2 = x.size();
+		N = 1;
+		while (N < N2) {
+			N *= 2;
+		}
+		x.resize(N);
+		for (int i = N2; i < N; i++) {
+			x[i] = x[N2 - 1];
+		}
+		ST = vector<Line>(N * 2 - 1);
+	}
+	void addLine(Line L, int i, int l, int r) {
+		T la = L.get(x[l]);
+		T lb = ST[i].get(x[l]);
+		T ra = L.get(x[r - 1]);
+		T rb = ST[i].get(x[r - 1]);
+		if (la <= lb && ra <= rb) {
+			return;
+		} else if (la >= lb && ra >= rb) {
+			ST[i] = L;
+		} else {
+			int m = (l + r) / 2;
+			T ma = L.get(x[m]);
+			T mb = ST[i].get(x[m]);
+			if (ma > mb) {
+				swap(L, ST[i]);
+				swap(la, lb);
+				swap(ra, rb);
+			}
+			if (la > lb) {
+				addLine(L, i * 2 + 1, l, m);
+			}
+			if (ra > rb) {
+				addLine(L, i * 2 + 2, m, r);
+			}
+		}
+	}
+	void addLine(T a, T b) {
+		addLine(Line(a, b), 0, 0, N);
+	}
+	T getMax(T x2) {
+		int p = lower_bound(x.begin(), x.end(), x2) - x.begin();
+		p += N - 1;
+		T ans = -inf;
+		ans = max(ans, ST[p].get(x2));
+		while (p > 0) {
+			p = (p - 1) / 2;
+			ans = max(ans, ST[p].get(x2));
+		}
+		return ans;
+	}
+};
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f4c696e65617242617369732e637070"></a>
+
+### LinearBasis
+
+```cpp
+template <class T>
+struct LinearBasis {
+    static constexpr int N = __lg(numeric_limits<T>::max());
+    array<T, N + 1> b;
+    bool zero;
+
+    LinearBasis() {
+        zero = false;
+        b.fill(0);
+    }
+
+    void insert(T x) {
+        for (int i = N; i >= 0; i--) {
+            if (x >> i & 1) {
+                if (b[i] == 0) {
+                    b[i] = x;
+                    return;
+                }
+                x ^= b[i];
+            }
+        }
+        zero = true;
+    }
+
+    T queryMax() {
+        T ans = 0;
+        for (int i = N; i >= 0; i--) {
+            ans = max(ans, ans ^ b[i]);
+        }
+        return ans;
+    }
+
+    T queryMin() {
+        if (zero) {
+            return T(0);
+        }
+        T res;
+        for (int i = 0; i <= N; i++) {
+            if (b[i] != 0) {
+                res = b[i];
+                break;
+            }
+        }
+        return res;
+    }
+
+    bool check(T x) {
+        for (int i = N; i >= 0; i--) {
+            if (x >> i & 1) {
+                if (b[i] == 0) {
+                    return false;
+                }
+                x ^= b[i];
+            }
+        }
+        return true;
+    }
+};
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f4d6f5f416c676f726974686d2e637070"></a>
+
+### Mo\_Algorithm
+
+```cpp
+const int B = max(1, int(n / sqrt(q)));
+vector<int> bel(n + 1);
+for (int i = 1; i <= n; i++) {
+    bel[i] = (i + B - 1) / B;
 }
-ostream& operator<<(ostream& os, i128 n) {
-    using u128 = __uint128_t;
-    u128 value = n;
-    if(n < 0) os << '-', value = -value;
-    char digits[40];
-    int len = 0;
-    do {
-        digits[len++] = char('0' + value % 10);
-        value /= 10;
-    } while(value);
-    while(len) os << digits[--len];
-    return os;
+
+// 将询问离线
+vector<array<int, 3>> Q(q);
+for (int i = 0; i < q; i++) {
+    int l, r;
+    cin >> l >> r;
+    Q[i] = {l, r, i};
+}
+
+// 按左端点所在块的编号为第一关键字，右端点为第二关键字排序
+sort(all(Q), [&](const auto &a, const auto &b) {
+    if (bel[a[0]] != bel[b[0]]) {
+        return bel[a[0]] < bel[b[0]];
+    }
+    if (bel[a[0]] & 1) {
+        return a[1] < b[1];
+    } else {
+        return a[1] > b[1];
+    }
+});
+
+vector<int> cnt(n + 1);
+int cur = 0;
+
+auto add = [&](int k) -> void {
+    if (cnt[a[k]]++ == 0) {
+        cur++;
+    }
+};
+
+auto del = [&](int k) -> void {
+    if (--cnt[a[k]] == 0) {
+        cur--;
+    }
+};
+
+vector<int> ans(q);
+
+// x, y 代表询问区间；l, r 代表当前所在区间
+// 先扩展，再删除
+for (int i = 0, l = 1, r = 0; i < q; i++) {
+    auto [x, y, id] = Q[i];
+    while (l > x) add(--l); // 左扩展
+    while (r < y) add(++r); // 右扩展
+    while (l < x) del(l++); // 左删除
+    while (r > y) del(r--); // 右删除
+    ans[id] = cur;
 }
 ```
 
-<a id="module-e585b6e4bb962f72616e646f6d2e637070"></a>
+<a id="module-e695b0e68daee7bb93e69e842f524d512e637070"></a>
 
-### random
+### RMQ
+
+```cpp
+template<class T, class F>
+struct RMQ {
+    int n;
+    vector<T> a;
+    array<vector<T>, 20> f;
+    F fun;
+    RMQ() {}
+    RMQ(const vector<T> &a_, F &&fun_): a(a_), fun(fun_) {
+        n = int(a.size()) - 1;
+        f.fill(vector<T>(n + 1));
+        for (int i = 1; i <= n; i++) {
+            f[0][i] = a[i];
+        }
+        for (int j = 1; j <= __lg(n); j++) {
+            for (int i = 1; i + (1 << j) - 1 <= n; i++) {
+                f[j][i] = fun(f[j - 1][i], f[j - 1][i + (1 << (j - 1))]);
+            }
+        }
+    }
+    T query(int l, int r) {
+        int k = __lg(r - l + 1);
+        return fun(f[k][l], f[k][r - (1 << k) + 1]);
+    }
+};
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f5365676d656e74547265652e637070"></a>
+
+### SegmentTree
+
+```cpp
+template <class Info>
+struct SegmentTree {
+    int n;
+    vector<Info> info;
+    SegmentTree(): n(0) {}
+    SegmentTree(int N, Info v = Info()) {
+        init(vector<Info>(N + 1, v));
+    }
+    SegmentTree(const vector<Info> &a) {
+        init(a);
+    }
+    void init(const vector<Info> &a) {
+        n = int(a.size()) - 1;
+        info.assign(n << 2, Info());
+        auto build = [&](auto &&self, int id, int l, int r) {
+            if (l == r) {
+                info[id] = a[l];
+                return;
+            }
+            int mid = (l + r) >> 1;
+            self(self, id * 2, l, mid);
+            self(self, id * 2 + 1, mid + 1, r);
+            pushUp(id);
+        };
+        build(build, 1, 1, n);
+    }
+    void pushUp(int id) {
+        info[id] = info[id * 2] + info[id * 2 + 1];
+    }
+    void set(int id, int l, int r, int x, const Info &v) {
+        if (l == r) {
+            info[id] = v;
+            return;
+        }
+        int mid = (l + r) >> 1;
+        if (x <= mid){
+            set(id * 2, l, mid, x, v);
+        } else {
+            set(id * 2 + 1, mid + 1, r, x, v);
+        }
+        pushUp(id);
+    }
+    void set(int x, const Info &v) {
+        set(1, 1, n, x, v);
+    }
+    Info get(int x) {
+        return prod(x, x);
+    }
+    Info prod(int id, int l, int r, int x, int y) {
+        if (x > r || y < l) {
+            return Info();
+        }
+        if (x <= l && y >= r) {
+            return info[id];
+        }
+        int mid = (l + r) >> 1;
+        return prod(id * 2, l, mid, x, y) + prod(id * 2 + 1, mid + 1, r, x, y);
+    }
+    Info prod(int l, int r) {
+        return prod(1, 1, n, l, r);
+    }
+    template<class F>
+    int findFirst(int id, int l, int r, int x, int y, F &&pred) {
+        if (x > r || y < l) {
+            return -1;
+        }
+        if (x <= l && y >= r && !pred(info[id])) {
+            return -1;
+        }
+        if (l == r) {
+            return l;
+        }
+        int mid = (l + r) >> 1;
+        int res = findFirst(id * 2, l, mid, x, y, pred);
+        if (res == -1) {
+            res = findFirst(id * 2 + 1, mid + 1, r, x, y, pred);
+        }
+        return res;
+    }
+    template<class F>
+    int findFirst(int l, int r, F &&pred) {
+        return findFirst(1, 1, n, l, r, pred);
+    }
+    template<class F>
+    int findLast(int id, int l, int r, int x, int y, F &&pred) {
+        if (x > r || y < l) {
+            return -1;
+        }
+        if (x <= l && y >= r && !pred(info[id])) {
+            return -1;
+        }
+        if (l == r) {
+            return l;
+        }
+        int mid = (l + r) >> 1;
+        int res = findLast(id * 2 + 1, mid + 1, r, x, y, pred);
+        if (res == -1) {
+            res = findLast(id * 2, l, mid, x, y, pred);
+        }
+        return res;
+    }
+    template<class F>
+    int findLast(int l, int r, F &&pred) {
+        return findLast(1, 1, n, l, r, pred);
+    }
+};
+
+struct Info {
+    bool status;
+
+    Info(): status(false) {}
+
+    friend Info operator+(const Info &a, const Info &b) {
+        if (!a.status) {
+            return b;
+        }
+        if (!b.status) {
+            return a;
+        }
+        Info c;
+        c.status = true;
+
+        
+
+        return c;
+    }
+    
+};
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f54726561702e637070"></a>
+
+### Treap
 
 ```cpp
 mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
 
-// 生成 [l, r] 范围内的数
-int rng(int l, int r) {
-    return rnd() % (r - l + 1) + l;
-}
+template <class T>
+struct Treap {
 
-// 生成在 [l, r] 范围内的一个区间
-pair<int, int> interval(int l = 1, int r = 5) {
-    int x = rng(l, r);
-    int y = rng(l, r);
-    return minmax(x, y);
-}
+    struct Node {
+        T val;
+        int l;
+        int r;
+        int siz;
+        int pri;
+        Node(const T &v): val(v), l(0), r(0), siz(1), pri(rnd()) {}
+    };
 
-// 生成节点数在 [l, r] 范围内的一棵树
-void tree(int l = 1, int r = 5) {
-    int n = rng(l, r);
-    cout << n << '\n';
+    vector<Node> tr;
+    int root;
 
-    for (int u = 2; u <= n; u++) {
-        int v = rng(1, u - 1);
-        cout << u << " " << v << '\n';
+    Treap() {
+        root = newNode(0);
+        tr[0].siz = 0;
     }
-}
 
-// 生成节点数在 [l, r] 范围内的一个无向连通图
-void graph(int l = 1, int r = 5) {
-    int n = rng(l, r);
-    int m = rng(n - 1, n * (n - 1) / 2);
-    cout << n << " " << m << '\n';
-    set<pair<int, int>> S;
-    vector<pair<int, int>> edges;
-    for (int u = 2; u <= n; u++) {
-        int v = rng(1, u - 1);
-        S.insert({u, v});
-        edges.push_back({u, v});
+    int newNode(const T &v) {
+        tr.push_back(Node(v));
+        return (int)tr.size() - 1;
     }
-    
-    for (int i = n; i <= m; i++) {
-        int u, v;
-        do {
-            u = rng(1, n);
-            v = rng(1, n);
-        } while (u == v || S.contains({u, v}));
-        S.insert({u, v});
-        edges.push_back({u, v});
+
+    void pushUp(int u) {
+        if (u == 0) {
+            return;
+        }
+        tr[u].siz = tr[tr[u].l].siz + tr[tr[u].r].siz + 1;
     }
-    for (int i = 0; i < m; i++) {
-        auto [u, v] = edges[i];
-        cout << u << " " << v << '\n';
+
+    void split(int u, const T &k, int &x, int &y) {
+        if (u == 0) {
+            x = y = 0;
+            return;
+        }
+        if (tr[u].val <= k) {
+            x = u;
+            split(tr[u].r, k, tr[u].r, y);
+        } else {
+            y = u;
+            split(tr[u].l, k, x, tr[u].l);
+        }
+        pushUp(u);
     }
-}
-```
 
-<a id="module-e585b6e4bb962f72756e2e7368"></a>
-
-### run
-
-```bash
-#!/bin/bash
-
-g++ -std=c++20 -include "./include/pch.hpp" $1.cpp -o $1
-
-./$1 < $1.in > $1.out
-
-cat $1.out
-```
-
-<a id="module-e585b6e4bb962f746573742e637070"></a>
-
-### test
-
-```cpp
-#include <bits/stdc++.h>
-using namespace std;
-
-int main() {
-
-    system("g++ -std=c++20 main.cpp -o main");
-    system("g++ -std=c++20 main__Good.cpp -o main__Good");
-    system("g++ -std=c++20 main__Generator.cpp -o main__Generator");
-
-    int t = 0;
-    while (true) {
-        cout << "test: " << t++ << endl;
-        system("./main__Generator > main.in");
-        system("./main < main.in > main.out");
-        system("./main__Good < main.in > main__Good.out");
-
-        // linux使用diff，windows使用fc
-        if (system("diff main.out main__Good.out")) {
-            cout << "WA" << endl;
-            return 0;
+    int merge(int x, int y) {
+        if (x == 0 || y == 0) {
+            return x == 0 ? y : x;
+        }
+        if (tr[x].pri < tr[y].pri) {
+            tr[x].r = merge(tr[x].r, y);
+            pushUp(x);
+            return x;
+        } else {
+            tr[y].l = merge(x, tr[y].l);
+            pushUp(y);
+            return y;
         }
     }
 
-    return 0;
-}
+    void insert(const T &v) {
+        int x, y;
+        split(root, v, x, y);
+        int z = newNode(v);
+        root = merge(merge(x, z), y);
+    }
+
+    bool erase(const T &v) {
+        int x, y, z;
+        split(root, v, y, z);
+        split(y, v - 1, x, y);
+        if (y == 0) {
+            merge(x, z);
+            return false;
+        }
+        y = merge(tr[y].l, tr[y].r);
+        root = merge(merge(x, y), z);
+        return true;
+    }
+
+    bool eraseAll(const T &v) {
+        int x, y, z;
+        split(root, v, y, z);
+        split(y, v - 1, x, y);
+        if (y == 0) {
+            merge(x, z);
+            return false;
+        }
+        root = merge(x, z);
+        return true;
+    }
+
+    int rank(const T &v) {
+        int u = root;
+        int cnt = 0;
+        while (u != 0) {
+            if (tr[u].val < v) {
+                cnt += tr[tr[u].l].siz + 1;
+                u = tr[u].r;
+            } else {
+                u = tr[u].l;
+            }
+        }
+        return cnt + 1;
+    }
+
+    T kth(int k) {
+        int u = root;
+        while (u != 0) {
+            int s = tr[tr[u].l].siz;
+            if (s >= k) {
+                u = tr[u].l;
+            } else if (s + 1 == k) {
+                return tr[u].val;
+            } else {
+                k -= s + 1;
+                u = tr[u].r;
+            }
+        }
+        return -1;
+    }
+
+    T prev(const T &v) {
+        int x, y;
+        split(root, v - 1, x, y);
+        int u = x;
+        while (u != 0) {
+            if (tr[u].r == 0) {
+                root = merge(x, y);
+                return tr[u].val;
+            }
+            u = tr[u].r;
+        }
+        return -1;
+    }
+
+    T next(const T &v) {
+        int x, y;
+        split(root, v, x, y);
+        int u = y;
+        while (u != 0) {
+            if (tr[u].l == 0) {
+                root = merge(x, y);
+                return tr[u].val;
+            }
+            u = tr[u].l;
+        }
+        return -1;
+    }
+};
 ```
 
 <a id="module-e59bbee8aeba"></a>
@@ -946,261 +1919,9 @@ vector<int> g;
 }
 ```
 
-<a id="module-e5ad97e7aca6e4b8b2"></a>
-
-## 字符串
-
-<a id="module-e5ad97e7aca6e4b8b22f4b4d502e637070"></a>
-
-### KMP
-
-```cpp
-vector<int> pre_function(const string &t) {
-    int m = t.size();
-    vector<int> pi(m);
-    for (int i = 1; i < m; i++) {
-        int j = pi[i - 1];
-        while (j > 0 && t[i] != t[j]) {
-            j = pi[j - 1];
-        }
-        if (t[i] == t[j]) {
-            j++;
-        }
-        pi[i] = j;
-    }
-    return pi;
-}
-
-vector<int> KMP(const string &s, const string &t) {
-    int n = s.size(), m = t.size();
-    vector<int> pi = pre_function(t);
-    vector<int> res;
-    for (int i = 0, j = 0; i < n; i++) {
-        while (j > 0 && s[i] != t[j]) {
-            j = pi[j - 1];
-        }
-        if (s[i] == t[j]) {
-            j++;
-        }
-        if (j == m) {
-            res.push_back(i - j + 1);
-            j = pi[j - 1];
-        }
-    }
-    return res;
-}
-```
-
-<a id="module-e5ad97e7aca6e4b8b22f4d616e61636865722e637070"></a>
-
-### Manacher
-
-```cpp
-vector<int> manacher(const string &s) {
-    string t = "#";
-    for (auto c : s) {
-        t.push_back(c);
-        t.push_back('#');
-    }
-    int n = t.size();
-    vector<int> r(n);
-    for (int i = 0, j = 0; i < n; i++) {
-        if (j * 2 - i >= 0 && j + r[j] > i) {
-            r[i] = min(r[j * 2 - i], j + r[j] - i);
-        }
-        while (i - r[i] >= 0 && i + r[i] < n && t[i - r[i]] == t[i + r[i]]) {
-            r[i]++;
-        }
-        if (i + r[i] > j + r[j]) {
-            j = i;
-        }
-    }
-    return r;
-}
-```
-
-<a id="module-e5ad97e7aca6e4b8b22f6d696e526f746174696f6e2e637070"></a>
-
-### minRotation
-
-```cpp
-template <class T>
-int minRotation(const T &s) {
-    int n = s.size();
-    int i = 0, j = 1, k = 0;
-
-    while (i < n && j < n && k < n) {
-        auto a = s[(i + k) % n];
-        auto b = s[(j + k) % n];
-
-        if (a == b) {
-            ++k;
-        } else {
-            if (a > b) {
-                i = i + k + 1;
-                if (i == j) ++i;
-            } else {
-                j = j + k + 1;
-                if (i == j) ++j;
-            }
-            k = 0;
-        }
-    }
-
-    return min(i, j);
-}
-```
-
-<a id="module-e5ad97e7aca6e4b8b22f537472696e67486173682e637070"></a>
-
-### StringHash
-
-```cpp
-constexpr u64 mod = (1ull << 61) - 1;
-mt19937_64 rnd(chrono::steady_clock::now().time_since_epoch().count());
-uniform_int_distribution<u64> dist(mod / 2, mod - 2);
-const u64 base = dist(rnd);
-
-struct StringHash {
-    vector<u64> h;
-    vector<u64> p;
-    StringHash() {}
-    StringHash(const string &s) {
-        init(s);
-    }
-    static u64 add(u64 a, u64 b) {
-        a += b;
-        if (a >= mod) a -= mod;
-        return a;
-    }
-    static u64 mul(u64 a, u64 b) {
-        u128 c = u128(a) * b;
-        return add(c >> 61, c & mod);
-    }
-    void init(const string &s) {
-        int n = s.size() - 1;
-        p.resize(n + 1);
-        h.resize(n + 1);
-        p[0] = 1;
-        for (int i = 1; i <= n; i++) {
-            p[i] = mul(p[i - 1], base);
-            h[i] = mul(h[i - 1], base);
-            h[i] = add(h[i], s[i]);
-        }
-    }
-    u64 get(int l, int r) {
-        return add(h[r], mod - mul(h[l - 1], p[r - l + 1]));
-    } 
-};
-```
-
-<a id="module-e5ad97e7aca6e4b8b22f547269652e637070"></a>
-
-### Trie
-
-```cpp
-constexpr int N = 1e6;
-
-int trie[N][26];
-int tot = 0;
-
-void clear() {
-    for (int i = 0; i <= tot; i++) {
-        fill(trie[i], trie[i] + 26, 0);
-    }
-    tot = 0;
-}
-
-void insert(const string &s) {
-    int n = s.size();
-    int p = 0;
-    for (int i = 0; i < n; i++) {
-        int &nxt = trie[p][s[i] - 'a'];
-        if (nxt == 0) {
-            nxt = ++tot;
-        }
-        p = nxt;
-    }
-}
-```
-
-<a id="module-e5ad97e7aca6e4b8b22f7a5f616c676f726974686d2e637070"></a>
-
-### z\_algorithm
-
-```cpp
-vector<int> z_algorithm(const string &s) {
-    int n = s.size();
-    vector<int> z(n);
-    int l = 0, r = 0;
-    for (int i = 1; i < n; i++) {
-        if (i <= r) {
-            z[i] = min(z[i - l], r - i + 1);
-        }
-        while (i + z[i] < n && s[z[i]] == s[i + z[i]]) {
-            l = i, r = i + z[i];
-            z[i]++;
-        }
-    }
-    return z;
-}
-```
-
 <a id="module-e695b0e5ada6"></a>
 
 ## 数学
-
-<a id="module-e695b0e5ada62f436f6d62284d496e74292e637070"></a>
-
-### Comb(MInt)
-
-```cpp
-struct Comb {
-    int n;
-    vector<Z> _fac;
-    vector<Z> _invfac;
-    vector<Z> _inv;
-    
-    Comb() : n{0}, _fac{1}, _invfac{1}, _inv{0} {}
-    Comb(int n) : Comb() {
-        init(n);
-    }
-    
-    void init(int m) {
-        if (m <= n) return;
-        _fac.resize(m + 1);
-        _invfac.resize(m + 1);
-        _inv.resize(m + 1);
-        
-        for (int i = n + 1; i <= m; i++) {
-            _fac[i] = _fac[i - 1] * i;
-        }
-        _invfac[m] = _fac[m].inv();
-        for (int i = m; i > n; i--) {
-            _invfac[i - 1] = _invfac[i] * i;
-            _inv[i] = _invfac[i] * _fac[i - 1];
-        }
-        n = m;
-    }
-    
-    Z fac(int m) {
-        if (m > n) init(2 * m);
-        return _fac[m];
-    }
-    Z invfac(int m) {
-        if (m > n) init(2 * m);
-        return _invfac[m];
-    }
-    Z inv(int m) {
-        if (m > n) init(2 * m);
-        return _inv[m];
-    }
-    Z binom(int n, int m) {
-        if (n < m || m < 0) return 0;
-        return fac(n) * invfac(m) * invfac(n - m);
-    }
-} comb;
-```
 
 <a id="module-e695b0e5ada62f436f6d622e637070"></a>
 
@@ -1644,43 +2365,6 @@ i64 Lucas(i64 n, i64 m) {
     if (mi > ni) return 0;
 
     return (i128)comb.binom(ni, mi) * Lucas(n / mod, m / mod) % mod;
-}
-```
-
-<a id="module-e695b0e5ada62f4d6174726978284d496e74292e637070"></a>
-
-### Matrix(MInt)
-
-```cpp
-constexpr int N = 2;
-using Mat = array<array<Z, N>, N>;
- 
-Mat operator*(const Mat &a, const Mat &b) {
-    Mat res {};
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            for (int k = 0; k < N; k++) {
-                res[i][j] += a[i][k] * b[k][j];
-            }
-        }
-    }
-    return res;
-}
- 
-Mat power(Mat a, i64 b) {
-    Mat res {};
-    for (int i = 0; i < N; i++) {
-        res[i][i] = 1;
-	}
- 
-    while (b) {
-        if (b & 1) {
-            res = res * a;
-        }
-        b >>= 1;
-        a = a * a;
-    }
-    return res;
 }
 ```
 
@@ -2155,1707 +2839,575 @@ void sieve(int n) {
 }
 ```
 
-<a id="module-e695b0e68daee7bb93e69e84"></a>
+<a id="module-e695b0e5ada62fe5b8b8e8a781e7bb84e59088e695b02e747970"></a>
 
-## 数据结构
+### 常见组合数
 
-<a id="module-e695b0e68daee7bb93e69e842f426967496e742e637070"></a>
+```typst
+== 卡特兰数
 
-### BigInt
+令 $C_n$ 表示第 $n$ 个卡特兰数：
 
-```cpp
-struct BigInt {
-    vector<int> a;  // 低位在前
+$ C_n = 1 / (n + 1) binom(2n, n) = binom(2n, n) - binom(2n, n - 1) $
 
-    BigInt(long long x = 0) {
-        *this = x;
-    }
+初值与常用递推式：
 
-    BigInt(const string &s) {
-        *this = s;
-    }
+$ C_0 = 1, quad C_n = sum_(i = 0)^(n - 1) C_i C_(n - 1 - i) $
 
-    // long long -> BigInt
-    BigInt& operator=(long long x) {
-        a.clear();
+$ C_n = (4n - 2) / (n + 1) C_(n - 1) quad (n >= 1) $
 
-        if (x == 0) {
-            a.push_back(0);
-            return *this;
-        }
+== 第二类斯特林数
 
-        while (x) {
-            a.push_back(x % 10);
-            x /= 10;
-        }
+令 $S_(n, k)$ 表示将 $n$ 个不同元素划分为 $k$ 个非空、无标号集合的方案数。
 
-        return *this;
-    }
+$ S_(0, 0) = 1, quad S_(n, 0) = 0 quad (n > 0), quad S_(0, k) = 0 quad (k > 0) $
 
-    // string -> BigInt
-    BigInt& operator=(const string &s) {
-        a.clear();
+递推式：
 
-        for (int i = (int)s.size() - 1; i >= 0; i--)
-            a.push_back(s[i] - '0');
+$ S_(n, k) = S_(n - 1, k - 1) + k S_(n - 1, k) $
 
-        trim();
-        return *this;
-    }
+容斥形式：
 
-    // 去除前导 0
-    void trim() {
-        while (a.size() > 1 && a.back() == 0)
-            a.pop_back();
-    }
+$ S_(n, k) = 1 / k! sum_(i = 0)^k (-1)^(k - i) binom(k, i) i^n $
 
-    // 比较
-    friend bool operator<(const BigInt &A, const BigInt &B) {
-        if (A.a.size() != B.a.size())
-            return A.a.size() < B.a.size();
+== 组合数恒等式
 
-        for (int i = (int)A.a.size() - 1; i >= 0; i--)
-            if (A.a[i] != B.a[i])
-                return A.a[i] < B.a[i];
+=== Pascal 恒等式
 
-        return false;
-    }
+$
+binom(n, k)
+=
+binom(n-1, k)
++
+binom(n-1, k-1)
+$
 
-    friend bool operator>(const BigInt &A, const BigInt &B) {
-        return B < A;
-    }
+=== 一行组合数之和
+$
+sum_(k=0)^n binom(n, k) = 2^n
+$
 
-    friend bool operator<=(const BigInt &A, const BigInt &B) {
-        return !(B < A);
-    }
+$
+sum_(k=0)^n binom(n, k) x^k
+=
+(1+x)^n
+$
 
-    friend bool operator>=(const BigInt &A, const BigInt &B) {
-        return !(A < B);
-    }
+=== 交错和
 
-    friend bool operator==(const BigInt &A, const BigInt &B) {
-        return A.a == B.a;
-    }
+当 $n > 0$ 时：
 
-    friend bool operator!=(const BigInt &A, const BigInt &B) {
-        return !(A == B);
-    }
+$
+sum_(k=0)^n (-1)^k binom(n, k)
+=
+0
+$
 
-    // 加法
-    friend BigInt operator+(const BigInt &A, const BigInt &B) {
-        BigInt C;
-        C.a.clear();
+=== Hockey-stick 恒等式
 
-        int t = 0;
+$
+sum_(i=k)^n binom(i, k)
+=
+binom(n+1, k+1)
+$
 
-        for (int i = 0;
-             i < A.a.size() || i < B.a.size() || t;
-             i++) {
+$
+sum_(i=0)^n binom(r+i, r)
+=
+binom(r+n+1, r+1)
+$
 
-            if (i < A.a.size()) t += A.a[i];
-            if (i < B.a.size()) t += B.a[i];
+=== Vandermonde 恒等式
 
-            C.a.push_back(t % 10);
-            t /= 10;
-        }
+$
+sum_k
+binom(n, k)
+binom(m, r-k)
+=
+binom(n+m, r)
+$
 
-        return C;
-    }
+$
+sum_(k=0)^r
+binom(n, k)
+binom(n, r-k)
+=
+binom(2n, r)
+$
 
-    // 减法，要求 A >= B
-    friend BigInt operator-(const BigInt &A, const BigInt &B) {
-        BigInt C;
-        C.a.clear();
+=== 平方和恒等式
 
-        int t = 0;
+$
+sum_(k=0)^n binom(n, k)^2
+=
+binom(2n, n)
+$
 
-        for (int i = 0; i < A.a.size(); i++) {
-            t = A.a[i] - t;
+=== 带 $k$ 的组合数
 
-            if (i < B.a.size())
-                t -= B.a[i];
+$
+k binom(n, k)
+=
+n binom(n-1, k-1)
+$
 
-            C.a.push_back((t + 10) % 10);
-            t = (t < 0);
-        }
+$
+sum_(k=0)^n
+k binom(n, k)
+=
+n 2^(n-1)
+$
 
-        C.trim();
-        return C;
-    }
+=== 带 $k(k-1)$ 的组合数
 
-    // 大整数 * 大整数
-    friend BigInt operator*(const BigInt &A, const BigInt &B) {
-        BigInt C;
-        C.a.assign(A.a.size() + B.a.size(), 0);
+$
+k(k-1) binom(n, k)
+=
+n(n-1) binom(n-2, k-2)
+$
 
-        for (int i = 0; i < A.a.size(); i++)
-            for (int j = 0; j < B.a.size(); j++)
-                C.a[i + j] += A.a[i] * B.a[j];
+$
+sum_(k=0)^n
+k(k-1) binom(n, k)
+=
+n(n-1) 2^(n-2)
+$
 
-        for (int i = 0; i + 1 < C.a.size(); i++) {
-            C.a[i + 1] += C.a[i] / 10;
-            C.a[i] %= 10;
-        }
+$
+k^2 = k(k-1) + k
+$
 
-        C.trim();
-        return C;
-    }
+$
+sum_(k=0)^n
+k^2 binom(n, k)
+=
+n(n+1) 2^(n-2)
+$
 
-    // 大整数 * int
-    friend BigInt operator*(const BigInt &A, int b) {
-        BigInt C;
-        C.a.clear();
+=== 吸收恒等式
 
-        long long t = 0;
+$
+binom(n, k) binom(k, r)
+=
+binom(n, r) binom(n-r, k-r)
+$
 
-        for (int i = 0; i < A.a.size() || t; i++) {
-            if (i < A.a.size())
-                t += 1LL * A.a[i] * b;
+$
+binom(n, k) binom(n-k, r)
+=
+binom(n, r) binom(n-r, k)
+$
 
-            C.a.push_back(t % 10);
-            t /= 10;
-        }
+=== 相邻组合数之比
 
-        C.trim();
-        return C;
-    }
-
-    friend BigInt operator*(int b, const BigInt &A) {
-        return A * b;
-    }
-
-    // 大整数 / int
-    friend BigInt operator/(const BigInt &A, int b) {
-        BigInt C;
-        C.a.clear();
-
-        long long r = 0;
-
-        for (int i = (int)A.a.size() - 1; i >= 0; i--) {
-            r = r * 10 + A.a[i];
-            C.a.push_back(r / b);
-            r %= b;
-        }
-
-        reverse(C.a.begin(), C.a.end());
-        C.trim();
-
-        return C;
-    }
-
-    // 大整数 % int
-    friend int operator%(const BigInt &A, int b) {
-        long long r = 0;
-
-        for (int i = (int)A.a.size() - 1; i >= 0; i--)
-            r = (r * 10 + A.a[i]) % b;
-
-        return r;
-    }
-
-    // 输入
-    friend istream& operator>>(istream &in, BigInt &x) {
-        string s;
-        in >> s;
-        x = s;
-        return in;
-    }
-
-    // 输出
-    friend ostream& operator<<(ostream &out, const BigInt &x) {
-        for (int i = (int)x.a.size() - 1; i >= 0; i--)
-            out << x.a[i];
-
-        return out;
-    }
-};
+$
+binom(n, k+1) / binom(n, k)
+=
+(n-k)/(k+1)
+$
 ```
 
-<a id="module-e695b0e68daee7bb93e69e842f4453552e637070"></a>
+<a id="module-e5ad97e7aca6e4b8b2"></a>
 
-### DSU
+## 字符串
+
+<a id="module-e5ad97e7aca6e4b8b22f4b4d502e637070"></a>
+
+### KMP
 
 ```cpp
-struct DSU {
-    vector<int> p, siz;
-    DSU() {}
-    DSU(int n) {
-        init(n);
-    }
-    void init(int n) {
-        p.resize(n + 1);
-        iota(p.begin(), p.end(), 0);
-        siz.assign(n + 1, 1);
-    }
-    int find(int x) {
-        if (x != p[x]) {
-            p[x] = find(p[x]);
+vector<int> pre_function(const string &t) {
+    int m = t.size();
+    vector<int> pi(m);
+    for (int i = 1; i < m; i++) {
+        int j = pi[i - 1];
+        while (j > 0 && t[i] != t[j]) {
+            j = pi[j - 1];
         }
-        return p[x];
+        if (t[i] == t[j]) {
+            j++;
+        }
+        pi[i] = j;
     }
-    bool merge(int x, int y) {
-        x = find(x);
-        y = find(y);
-        if (x == y) return false;
-        siz[x] += siz[y];
-        p[y] = x;
-        return true;
+    return pi;
+}
+
+vector<int> KMP(const string &s, const string &t) {
+    int n = s.size(), m = t.size();
+    vector<int> pi = pre_function(t);
+    vector<int> res;
+    for (int i = 0, j = 0; i < n; i++) {
+        while (j > 0 && s[i] != t[j]) {
+            j = pi[j - 1];
+        }
+        if (s[i] == t[j]) {
+            j++;
+        }
+        if (j == m) {
+            res.push_back(i - j + 1);
+            j = pi[j - 1];
+        }
     }
-    int size(int x) {
-        return siz[find(x)];
-    }
-    bool same(int x, int y) {
-        return find(x) == find(y);
-    }
-};
+    return res;
+}
 ```
 
-<a id="module-e695b0e68daee7bb93e69e842f44796e616d69634269747365742e637070"></a>
+<a id="module-e5ad97e7aca6e4b8b22f4d616e61636865722e637070"></a>
 
-### DynamicBitset
+### Manacher
 
 ```cpp
-#if __has_include(<bit>)
-  #include <bit>     // C++20 popcount/countr_zero
-#endif
-
-#if defined(_MSC_VER)
-  #include <intrin.h>
-#endif
-
-class DynamicBitset {
-public:
-    using block_type = std::uint64_t;
-    using size_type  = std::size_t;
-
-    static constexpr size_type npos = static_cast<size_type>(-1);
-    static constexpr size_type bits_per_block = 64;
-
-    // ----- proxy reference (like std::bitset::reference) -----
-    class reference {
-        friend class DynamicBitset;
-        block_type* blk_ = nullptr;
-        block_type  mask_ = 0;
-
-        reference(block_type& blk, size_type bit_in_block) noexcept
-            : blk_(&blk), mask_(block_type(1) << bit_in_block) {}
-
-    public:
-        reference() = delete;
-
-        reference& operator=(bool v) noexcept {
-            if (v) *blk_ |= mask_;
-            else   *blk_ &= ~mask_;
-            return *this;
-        }
-
-        reference& operator=(const reference& r) noexcept {
-            return (*this = static_cast<bool>(r));
-        }
-
-        operator bool() const noexcept {
-            return (*blk_ & mask_) != 0;
-        }
-
-        reference& flip() noexcept {
-            *blk_ ^= mask_;
-            return *this;
-        }
-    };
-
-    // ----- ctors -----
-    DynamicBitset() = default;
-
-    explicit DynamicBitset(size_type nbits, bool value = false)
-        : nbits_(nbits), data_(blocks_for(nbits), value ? ~block_type(0) : block_type(0)) {
-        trim_();
+vector<int> manacher(const string &s) {
+    string t = "#";
+    for (auto c : s) {
+        t.push_back(c);
+        t.push_back('#');
     }
-
-    // 从 0/1 字符串构造（与 std::bitset::to_string 方向一致：s[0] 是最高位）
-    explicit DynamicBitset(const std::string& s, char zero = '0', char one = '1')
-        : nbits_(s.size()), data_(blocks_for(s.size()), 0) {
-        for (size_type i = 0; i < s.size(); ++i) {
-            const char c = s[i];
-            if (c == one) {
-                const size_type pos = (s.size() - 1 - i); // s[0] -> highest bit
-                set_unchecked_(pos, true);
-            } else if (c != zero) {
-                throw std::invalid_argument("DynamicBitset: invalid character in string");
-            }
+    int n = t.size();
+    vector<int> r(n);
+    for (int i = 0, j = 0; i < n; i++) {
+        if (j * 2 - i >= 0 && j + r[j] > i) {
+            r[i] = min(r[j * 2 - i], j + r[j] - i);
         }
-        trim_();
-    }
-
-    // ----- capacity -----
-    size_type size() const noexcept { return nbits_; }
-    bool empty() const noexcept { return nbits_ == 0; }
-
-    void reserve(size_type nbits) {
-        data_.reserve(blocks_for(nbits));
-    }
-
-    void resize(size_type nbits, bool value = false) {
-        const size_type old_bits = nbits_;
-        const size_type old_blocks = data_.size();
-
-        nbits_ = nbits;
-        const size_type new_blocks = blocks_for(nbits_);
-
-        if (new_blocks != old_blocks) {
-            data_.resize(new_blocks, value ? ~block_type(0) : block_type(0));
+        while (i - r[i] >= 0 && i + r[i] < n && t[i - r[i]] == t[i + r[i]]) {
+            r[i]++;
         }
+        if (i + r[i] > j + r[j]) {
+            j = i;
+        }
+    }
+    return r;
+}
+```
 
-        if (value && nbits_ > old_bits) {
-            // 补齐 old_bits..nbits_-1 为 1
-            if (old_bits > 0) {
-                const size_type b = old_bits / bits_per_block;
-                const size_type o = old_bits % bits_per_block;
+<a id="module-e5ad97e7aca6e4b8b22f6d696e526f746174696f6e2e637070"></a>
 
-                if (b < data_.size()) {
-                    if (o != 0) {
-                        // 把原最后一个 block 中 o..63 先置 1（再 trim 到新大小）
-                        data_[b] |= (~block_type(0) << o);
-                    }
-                    // 新增 blocks 已经用 ~0 初始化了，无需额外处理
-                }
+### minRotation
+
+```cpp
+template <class T>
+int minRotation(const T &s) {
+    int n = s.size();
+    int i = 0, j = 1, k = 0;
+
+    while (i < n && j < n && k < n) {
+        auto a = s[(i + k) % n];
+        auto b = s[(j + k) % n];
+
+        if (a == b) {
+            ++k;
+        } else {
+            if (a > b) {
+                i = i + k + 1;
+                if (i == j) ++i;
             } else {
-                // old_bits==0，若 new_blocks>0 且 value==true，vector resize 已经填 ~0
+                j = j + k + 1;
+                if (i == j) ++j;
             }
-        }
-
-        trim_();
-    }
-
-    // ----- element access -----
-    // 与 std::bitset 一致：operator[] 不做越界检查（越界是 UB / 由 assert 捕获）
-    reference operator[](size_type pos) noexcept {
-        assert(pos < nbits_);
-        return reference(data_[pos / bits_per_block], pos % bits_per_block);
-    }
-
-    bool operator[](size_type pos) const noexcept {
-        assert(pos < nbits_);
-        return test_unchecked_(pos);
-    }
-
-    // 与 std::bitset::test 一致：越界抛 out_of_range
-    bool test(size_type pos) const {
-        if (pos >= nbits_) throw std::out_of_range("DynamicBitset::test out of range");
-        return test_unchecked_(pos);
-    }
-
-    // ----- modifiers -----
-    DynamicBitset& set() noexcept {
-        std::fill(data_.begin(), data_.end(), ~block_type(0));
-        trim_();
-        return *this;
-    }
-
-    DynamicBitset& reset() noexcept {
-        std::fill(data_.begin(), data_.end(), block_type(0));
-        return *this;
-    }
-
-    DynamicBitset& flip() noexcept {
-        for (auto& x : data_) x = ~x;
-        trim_();
-        return *this;
-    }
-
-    DynamicBitset& set(size_type pos, bool value = true) {
-        if (pos >= nbits_) throw std::out_of_range("DynamicBitset::set(pos) out of range");
-        set_unchecked_(pos, value);
-        return *this;
-    }
-
-    DynamicBitset& reset(size_type pos) {
-        return set(pos, false);
-    }
-
-    DynamicBitset& flip(size_type pos) {
-        if (pos >= nbits_) throw std::out_of_range("DynamicBitset::flip(pos) out of range");
-        data_[pos / bits_per_block] ^= (block_type(1) << (pos % bits_per_block));
-        return *this;
-    }
-
-    // ----- queries -----
-    size_type count() const noexcept {
-        size_type ans = 0;
-        for (block_type x : data_) ans += popcount64_(x);
-        return ans;
-    }
-
-    bool any() const noexcept {
-        for (block_type x : data_) if (x) return true;
-        return false;
-    }
-
-    bool none() const noexcept { return !any(); }
-
-    bool all() const noexcept {
-        if (nbits_ == 0) return true; // vacuously true
-        const size_type nb = data_.size();
-        if (nb == 0) return true;
-
-        for (size_type i = 0; i + 1 < nb; ++i) {
-            if (data_[i] != ~block_type(0)) return false;
-        }
-        return (data_.back() & last_mask_()) == last_mask_();
-    }
-
-    // ----- find set bits (fast iteration) -----
-    // 返回第一个置 1 bit 的位置，若不存在返回 npos
-    size_type find_first() const noexcept {
-        for (size_type i = 0; i < data_.size(); ++i) {
-            const block_type x = data_[i];
-            if (x) return i * bits_per_block + ctz64_(x);
-        }
-        return npos;
-    }
-
-    // 返回严格大于 pos 的下一个置 1 bit 的位置，若不存在返回 npos
-    size_type find_next(size_type pos) const noexcept {
-        if (pos >= nbits_) return npos;
-        pos += 1;
-        if (pos >= nbits_) return npos;
-
-        size_type i = pos / bits_per_block;
-        const size_type off = pos % bits_per_block;
-
-        block_type x = data_[i] & (~block_type(0) << off);
-        if (x) return i * bits_per_block + ctz64_(x);
-
-        for (++i; i < data_.size(); ++i) {
-            x = data_[i];
-            if (x) return i * bits_per_block + ctz64_(x);
-        }
-        return npos;
-    }
-
-    // ----- conversion -----
-    std::string to_string(char zero = '0', char one = '1') const {
-        std::string s;
-        s.resize(nbits_);
-        for (size_type i = 0; i < nbits_; ++i) {
-            const bool bit = test_unchecked_(nbits_ - 1 - i);
-            s[i] = bit ? one : zero;
-        }
-        return s;
-    }
-
-    unsigned long to_ulong() const {
-        return to_uint_checked_<unsigned long>();
-    }
-
-    unsigned long long to_ullong() const {
-        return to_uint_checked_<unsigned long long>();
-    }
-
-    // ----- bitwise ops (sizes must match, like std::bitset) -----
-    DynamicBitset& operator&=(const DynamicBitset& rhs) noexcept {
-        assert(nbits_ == rhs.nbits_);
-        for (size_type i = 0; i < data_.size(); ++i) data_[i] &= rhs.data_[i];
-        // 不必 trim（双方都保持 trimmed），但保守起见可 trim
-        trim_();
-        return *this;
-    }
-
-    DynamicBitset& operator|=(const DynamicBitset& rhs) noexcept {
-        assert(nbits_ == rhs.nbits_);
-        for (size_type i = 0; i < data_.size(); ++i) data_[i] |= rhs.data_[i];
-        trim_();
-        return *this;
-    }
-
-    DynamicBitset& operator^=(const DynamicBitset& rhs) noexcept {
-        assert(nbits_ == rhs.nbits_);
-        for (size_type i = 0; i < data_.size(); ++i) data_[i] ^= rhs.data_[i];
-        trim_();
-        return *this;
-    }
-
-    // ----- shifts -----
-    DynamicBitset& operator<<=(size_type k) noexcept {
-        if (k == 0 || nbits_ == 0) return *this;
-        if (k >= nbits_) return reset();
-
-        const size_type nb = data_.size();
-        const size_type bs = k / bits_per_block;
-        const size_type os = k % bits_per_block;
-
-        if (bs) {
-            for (size_type i = nb; i-- > bs; ) data_[i] = data_[i - bs];
-            std::fill(data_.begin(), data_.begin() + bs, block_type(0));
-        }
-
-        if (os) {
-            for (size_type i = nb; i-- > 1; ) {
-                data_[i] = (data_[i] << os) | (data_[i - 1] >> (bits_per_block - os));
-            }
-            data_[0] <<= os;
-        }
-
-        trim_();
-        return *this;
-    }
-
-    DynamicBitset& operator>>=(size_type k) noexcept {
-        if (k == 0 || nbits_ == 0) return *this;
-        if (k >= nbits_) return reset();
-
-        const size_type nb = data_.size();
-        const size_type bs = k / bits_per_block;
-        const size_type os = k % bits_per_block;
-
-        if (bs) {
-            for (size_type i = 0; i + bs < nb; ++i) data_[i] = data_[i + bs];
-            std::fill(data_.end() - bs, data_.end(), block_type(0));
-        }
-
-        if (os) {
-            for (size_type i = 0; i + 1 < nb; ++i) {
-                data_[i] = (data_[i] >> os) | (data_[i + 1] << (bits_per_block - os));
-            }
-            data_[nb - 1] >>= os;
-        }
-
-        trim_();
-        return *this;
-    }
-
-    // ----- friends: operators -----
-    friend DynamicBitset operator~(DynamicBitset x) noexcept { x.flip(); return x; }
-
-    friend DynamicBitset operator&(DynamicBitset a, const DynamicBitset& b) noexcept { a &= b; return a; }
-    friend DynamicBitset operator|(DynamicBitset a, const DynamicBitset& b) noexcept { a |= b; return a; }
-    friend DynamicBitset operator^(DynamicBitset a, const DynamicBitset& b) noexcept { a ^= b; return a; }
-
-    friend DynamicBitset operator<<(DynamicBitset a, size_type k) noexcept { a <<= k; return a; }
-    friend DynamicBitset operator>>(DynamicBitset a, size_type k) noexcept { a >>= k; return a; }
-
-    friend bool operator==(const DynamicBitset& a, const DynamicBitset& b) noexcept {
-        return a.nbits_ == b.nbits_ && a.data_ == b.data_;
-    }
-    friend bool operator!=(const DynamicBitset& a, const DynamicBitset& b) noexcept {
-        return !(a == b);
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const DynamicBitset& b) {
-        return os << b.to_string();
-    }
-
-    void swap(DynamicBitset& other) noexcept {
-        std::swap(nbits_, other.nbits_);
-        data_.swap(other.data_);
-    }
-
-private:
-    size_type nbits_ = 0;
-    std::vector<block_type> data_;
-
-    static size_type blocks_for(size_type nbits) noexcept {
-        return (nbits + bits_per_block - 1) / bits_per_block;
-    }
-
-    block_type last_mask_() const noexcept {
-        const size_type r = nbits_ % bits_per_block;
-        if (r == 0) return ~block_type(0);
-        return (block_type(1) << r) - 1;
-    }
-
-    void trim_() noexcept {
-        if (!data_.empty()) data_.back() &= last_mask_();
-    }
-
-    bool test_unchecked_(size_type pos) const noexcept {
-        return (data_[pos / bits_per_block] >> (pos % bits_per_block)) & 1;
-    }
-
-    void set_unchecked_(size_type pos, bool value) noexcept {
-        block_type& blk = data_[pos / bits_per_block];
-        const block_type m = block_type(1) << (pos % bits_per_block);
-        if (value) blk |= m;
-        else       blk &= ~m;
-    }
-
-    // ----- fast bit ops (popcount / ctz) -----
-    static inline std::uint32_t popcount64_(std::uint64_t x) noexcept {
-    #if defined(__cpp_lib_bitops) && (__cpp_lib_bitops >= 201907L)
-        return static_cast<std::uint32_t>(std::popcount(x));
-    #elif defined(_MSC_VER)
-      #if defined(_M_X64) || defined(_M_ARM64)
-        return static_cast<std::uint32_t>(__popcnt64(x));
-      #else
-        return static_cast<std::uint32_t>(__popcnt(static_cast<unsigned>(x)) +
-                                          __popcnt(static_cast<unsigned>(x >> 32)));
-      #endif
-    #else
-        return static_cast<std::uint32_t>(__builtin_popcountll(static_cast<unsigned long long>(x)));
-    #endif
-    }
-
-    // x 必须非 0
-    static inline std::uint32_t ctz64_(std::uint64_t x) noexcept {
-    #if defined(__cpp_lib_bitops) && (__cpp_lib_bitops >= 201907L)
-        return static_cast<std::uint32_t>(std::countr_zero(x));
-    #elif defined(_MSC_VER)
-        unsigned long idx = 0;
-      #if defined(_M_X64) || defined(_M_ARM64)
-        _BitScanForward64(&idx, x);
-        return static_cast<std::uint32_t>(idx);
-      #else
-        // 32-bit: split scan
-        const unsigned lo = static_cast<unsigned>(x);
-        if (lo) {
-            _BitScanForward(&idx, lo);
-            return static_cast<std::uint32_t>(idx);
-        }
-        _BitScanForward(&idx, static_cast<unsigned>(x >> 32));
-        return static_cast<std::uint32_t>(idx + 32);
-      #endif
-    #else
-        return static_cast<std::uint32_t>(__builtin_ctzll(static_cast<unsigned long long>(x)));
-    #endif
-    }
-
-    template <class U>
-    U to_uint_checked_() const {
-        static_assert(std::is_unsigned<U>::value, "U must be an unsigned integer type");
-
-        constexpr size_type W = std::numeric_limits<U>::digits;
-        // 检查溢出：若有任何位 >= W 为 1，则 overflow
-        if (nbits_ > W) {
-            const size_type idx = W / bits_per_block;
-            const size_type off = W % bits_per_block;
-
-            if (idx < data_.size()) {
-                if (off != 0) {
-                    const block_type m = (~block_type(0) << off);
-                    if (data_[idx] & m) throw std::overflow_error("DynamicBitset: to_uint overflow");
-                } else {
-                    if (data_[idx]) throw std::overflow_error("DynamicBitset: to_uint overflow");
-                }
-                for (size_type j = idx + 1; j < data_.size(); ++j) {
-                    if (data_[j]) throw std::overflow_error("DynamicBitset: to_uint overflow");
-                }
-            }
-        }
-
-        // 取低 W 位
-        U res = 0;
-        size_type remaining = std::min(nbits_, W);
-
-        size_type bi = 0;
-        size_type shift = 0;
-        while (remaining > 0) {
-            const size_type take = std::min(remaining, bits_per_block);
-            const block_type mask = (take == bits_per_block) ? ~block_type(0)
-                                                            : ((block_type(1) << take) - 1);
-            const block_type part = data_[bi] & mask;
-            res |= (static_cast<U>(part) << shift);
-
-            remaining -= take;
-            shift += take;
-            ++bi;
-        }
-        return res;
-    }
-};
-```
-
-<a id="module-e695b0e68daee7bb93e69e842f46656e7769636b2e637070"></a>
-
-### Fenwick
-
-```cpp
-template <class T>
-struct Fenwick {
-    int n;
-    vector<T> a;
-    Fenwick() {}
-    Fenwick(int N): n(N), a(N + 1) {}
-    void add(int x, const T &v) {
-        for (int i = x; i <= n; i += (i & -i)) {
-            a[i] = a[i] + v;
+            k = 0;
         }
     }
-    void set(int x, const T &v) {
-        add(x, v - sum(x, x));
-    }
-    T sum(int x) {
-        T ans{};
-        for (int i = x; i > 0; i -= (i & -i)) {
-            ans = ans + a[i];
-        }
-        return ans;
-    }
-    T sum(int l, int r) {
-        if (l > r) {
-            return T{0};
-        }
-        return sum(r) - sum(l - 1);
-    }
-    int lower_bound(T v) {
-        int x = 0;
-        for (int i = 1 << __lg(n); i > 0; i >>= 1) {
-            if (x + i <= n && a[x + i] < v) {
-                x += i;
-                v = v - a[x];
-            }
-        }
-        return x + 1;
-    }
-    int upper_bound(T v) {
-        int x = 0;
-        for (int i = 1 << __lg(n); i > 0; i >>= 1) {
-            if (x + i <= n && a[x + i] <= v) {
-                x += i;
-                v = v - a[x];
-            }
-        }
-        return x + 1;
-    }
-};
-```
 
-<a id="module-e695b0e68daee7bb93e69e842f467261632e637070"></a>
-
-### Frac
-
-```cpp
-template<class T>
-struct Frac {
-    T num;
-    T den;
-    Frac(T num_, T den_) : num(num_), den(den_) {
-        if (den < 0) {
-            den = -den;
-            num = -num;
-        }
-    }
-    Frac() : Frac(0, 1) {}
-    Frac(T num_) : Frac(num_, 1) {}
-    explicit operator double() const {
-        return 1. * num / den;
-    }
-    Frac &operator+=(const Frac &rhs) {
-        num = num * rhs.den + rhs.num * den;
-        den *= rhs.den;
-        return *this;
-    }
-    Frac &operator-=(const Frac &rhs) {
-        num = num * rhs.den - rhs.num * den;
-        den *= rhs.den;
-        return *this;
-    }
-    Frac &operator*=(const Frac &rhs) {
-        num *= rhs.num;
-        den *= rhs.den;
-        return *this;
-    }
-    Frac &operator/=(const Frac &rhs) {
-        num *= rhs.den;
-        den *= rhs.num;
-        if (den < 0) {
-            num = -num;
-            den = -den;
-        }
-        return *this;
-    }
-    friend Frac operator+(Frac lhs, const Frac &rhs) {
-        return lhs += rhs;
-    }
-    friend Frac operator-(Frac lhs, const Frac &rhs) {
-        return lhs -= rhs;
-    }
-    friend Frac operator*(Frac lhs, const Frac &rhs) {
-        return lhs *= rhs;
-    }
-    friend Frac operator/(Frac lhs, const Frac &rhs) {
-        return lhs /= rhs;
-    }
-    friend Frac operator-(const Frac &a) {
-        return Frac(-a.num, a.den);
-    }
-    friend bool operator==(const Frac &lhs, const Frac &rhs) {
-        return lhs.num * rhs.den == rhs.num * lhs.den;
-    }
-    friend bool operator!=(const Frac &lhs, const Frac &rhs) {
-        return lhs.num * rhs.den != rhs.num * lhs.den;
-    }
-    friend bool operator<(const Frac &lhs, const Frac &rhs) {
-        return lhs.num * rhs.den < rhs.num * lhs.den;
-    }
-    friend bool operator>(const Frac &lhs, const Frac &rhs) {
-        return lhs.num * rhs.den > rhs.num * lhs.den;
-    }
-    friend bool operator<=(const Frac &lhs, const Frac &rhs) {
-        return lhs.num * rhs.den <= rhs.num * lhs.den;
-    }
-    friend bool operator>=(const Frac &lhs, const Frac &rhs) {
-        return lhs.num * rhs.den >= rhs.num * lhs.den;
-    }
-    friend ostream &operator<<(ostream &os, Frac x) {
-        T g = gcd(x.num, x.den);
-        if (x.den == g) {
-            return os << x.num / g;
-        } else {
-            return os << x.num / g << "/" << x.den / g;
-        }
-    }
-};
-```
-
-<a id="module-e695b0e68daee7bb93e69e842f4c617a795365676d656e74547265652e637070"></a>
-
-### LazySegmentTree
-
-```cpp
-template <class Info, class Tag>
-struct LazySegmentTree {
-    int n;
-    vector<Info> info;
-    vector<Tag> tag;
-    LazySegmentTree(): n(0) {}
-    LazySegmentTree(int N, Info v = Info()) {
-        init(vector<Info>(N + 1, v));
-    }
-    LazySegmentTree(const vector<Info> &a) {
-        init(a);
-    }
-    void init(const vector<Info> &a) {
-        n = int(a.size()) - 1;
-        info.assign(n << 2, Info());
-        tag.assign(n << 2, Tag());
-        auto build = [&](auto &&self, int id, int l, int r) {
-            if (l == r) {
-                info[id] = a[l];
-                return;
-            }
-            int mid = (l + r) >> 1;
-            self(self, id * 2, l, mid);
-            self(self, id * 2 + 1, mid + 1, r);
-            pushUp(id);
-        };
-        build(build, 1, 1, n);
-    }
-    void apply(int id, const Tag &t) {
-        info[id].apply(t);
-        tag[id].apply(t);
-    }
-    void pushDown(int id) {
-        apply(id * 2, tag[id]);
-        apply(id * 2 + 1, tag[id]);
-        tag[id] = Tag();
-    }
-    void pushUp(int id) {
-        info[id] = info[id * 2] + info[id * 2 + 1];
-    }
-    void set(int id, int l, int r, int x, const Info &v) {
-        if (l == r) {
-            info[id] = v;
-            return;
-        }
-        int mid = (l + r) >> 1;
-        pushDown(id);
-        if (x <= mid){
-            set(id * 2, l, mid, x, v);
-        } else {
-            set(id * 2 + 1, mid + 1, r, x, v);
-        }
-        pushUp(id);
-    }
-    void set(int x, const Info &v) {
-        set(1, 1, n, x, v);
-    }
-    Info get(int x) {
-        return prod(x, x);
-    }
-    Info prod(int id, int l, int r, int x, int y) {
-        if (x > r || y < l) {
-            return Info();
-        }
-        if (x <= l && y >= r) {
-            return info[id];
-        }
-        pushDown(id);
-        int mid = (l + r) >> 1;
-        return prod(id * 2, l, mid, x, y) + prod(id * 2 + 1, mid + 1, r, x, y);
-    }
-    Info prod(int l, int r) {
-        return prod(1, 1, n, l, r);
-    }
-    void apply(int id, int l, int r, int x, int y, const Tag &t) {
-        if (x > r || y < l) {
-            return;
-        }
-        if (x <= l && y >= r) {
-            apply(id, t);
-            return;
-        }
-        pushDown(id);
-        int mid = (l + r) >> 1;
-        apply(id * 2, l, mid, x, y, t);
-        apply(id * 2 + 1, mid + 1, r, x, y, t);
-        pushUp(id);
-    }
-    void apply(int l, int r, const Tag &t) {
-        apply(1, 1, n, l, r, t);
-    }
-    template<class F>
-    int findFirst(int id, int l, int r, int x, int y, F &&pred) {
-        if (x > r || y < l) {
-            return -1;
-        }
-        if (x <= l && y >= r && !pred(info[id])) {
-            return -1;
-        }
-        if (l == r) {
-            return l;
-        }
-        pushDown(id);
-        int mid = (l + r) >> 1;
-        int res = findFirst(id * 2, l, mid, x, y, pred);
-        if (res == -1) {
-            res = findFirst(id * 2 + 1, mid + 1, r, x, y, pred);
-        }
-        return res;
-    }
-    template<class F>
-    int findFirst(int l, int r, F &&pred) {
-        return findFirst(1, 1, n, l, r, pred);
-    }
-    template<class F>
-    int findLast(int id, int l, int r, int x, int y, F &&pred) {
-        if (x > r || y < l) {
-            return -1;
-        }
-        if (x <= l && y >= r && !pred(info[id])) {
-            return -1;
-        }
-        if (l == r) {
-            return l;
-        }
-        pushDown(id);
-        int mid = (l + r) >> 1;
-        int res = findLast(id * 2 + 1, mid + 1, r, x, y, pred);
-        if (res == -1) {
-            res = findLast(id * 2, l, mid, x, y, pred);
-        }
-        return res;
-    }
-    template<class F>
-    int findLast(int l, int r, F &&pred) {
-        return findLast(1, 1, n, l, r, pred);
-    }
-};
-
-struct Tag {
-    bool status;
-
-    Tag(): status(false) {}
-
-    void apply(const Tag &t) {
-        if (!t.status) {
-            return;
-        }
-        if (!status) {
-            *this = t;
-            return;
-        }
-
-    }
-};
-
-struct Info {
-    bool status;
-
-    Info(): status(false) {}
-    
-    void apply(const Tag &t) {
-        if (!t.status) {
-            return;
-        }
-        
-    }
-
-    friend Info operator+(const Info &a, const Info &b) {
-        if (!a.status) {
-            return b;
-        }
-        if (!b.status) {
-            return a;
-        }
-        Info c;
-        c.status = true;
-
-        
-
-        return c;
-    }
-
-};
-```
-
-<a id="module-e695b0e68daee7bb93e69e842f4c694368616f547265652e637070"></a>
-
-### LiChaoTree
-
-```cpp
-constexpr i64 inf = 2e18;
-template <class T>
-struct LiChaoTree {
-	struct Line {
-		T a, b;
-		Line(): a(0), b(-inf) {
-		}
-		Line(T a, T b): a(a), b(b) {
-		}
-		T get(T x) {
-			return a * x + b;
-		}
-	};
-	int N;
-	vector<T> x;
-	vector<Line> ST;
-	LiChaoTree() {}
-	LiChaoTree(const vector<T> &x2) {
-		x = x2;
-		sort(x.begin(), x.end());
-		x.erase(unique(x.begin(), x.end()), x.end());
-		int N2 = x.size();
-		N = 1;
-		while (N < N2) {
-			N *= 2;
-		}
-		x.resize(N);
-		for (int i = N2; i < N; i++) {
-			x[i] = x[N2 - 1];
-		}
-		ST = vector<Line>(N * 2 - 1);
-	}
-	void addLine(Line L, int i, int l, int r) {
-		T la = L.get(x[l]);
-		T lb = ST[i].get(x[l]);
-		T ra = L.get(x[r - 1]);
-		T rb = ST[i].get(x[r - 1]);
-		if (la <= lb && ra <= rb) {
-			return;
-		} else if (la >= lb && ra >= rb) {
-			ST[i] = L;
-		} else {
-			int m = (l + r) / 2;
-			T ma = L.get(x[m]);
-			T mb = ST[i].get(x[m]);
-			if (ma > mb) {
-				swap(L, ST[i]);
-				swap(la, lb);
-				swap(ra, rb);
-			}
-			if (la > lb) {
-				addLine(L, i * 2 + 1, l, m);
-			}
-			if (ra > rb) {
-				addLine(L, i * 2 + 2, m, r);
-			}
-		}
-	}
-	void addLine(T a, T b) {
-		addLine(Line(a, b), 0, 0, N);
-	}
-	T getMax(T x2) {
-		int p = lower_bound(x.begin(), x.end(), x2) - x.begin();
-		p += N - 1;
-		T ans = -inf;
-		ans = max(ans, ST[p].get(x2));
-		while (p > 0) {
-			p = (p - 1) / 2;
-			ans = max(ans, ST[p].get(x2));
-		}
-		return ans;
-	}
-};
-```
-
-<a id="module-e695b0e68daee7bb93e69e842f4c696e65617242617369732e637070"></a>
-
-### LinearBasis
-
-```cpp
-template <class T>
-struct LinearBasis {
-    static constexpr int N = __lg(numeric_limits<T>::max());
-    array<T, N + 1> b;
-    bool zero;
-
-    LinearBasis() {
-        zero = false;
-        b.fill(0);
-    }
-
-    void insert(T x) {
-        for (int i = N; i >= 0; i--) {
-            if (x >> i & 1) {
-                if (b[i] == 0) {
-                    b[i] = x;
-                    return;
-                }
-                x ^= b[i];
-            }
-        }
-        zero = true;
-    }
-
-    T queryMax() {
-        T ans = 0;
-        for (int i = N; i >= 0; i--) {
-            ans = max(ans, ans ^ b[i]);
-        }
-        return ans;
-    }
-
-    T queryMin() {
-        if (zero) {
-            return T(0);
-        }
-        T res;
-        for (int i = 0; i <= N; i++) {
-            if (b[i] != 0) {
-                res = b[i];
-                break;
-            }
-        }
-        return res;
-    }
-
-    bool check(T x) {
-        for (int i = N; i >= 0; i--) {
-            if (x >> i & 1) {
-                if (b[i] == 0) {
-                    return false;
-                }
-                x ^= b[i];
-            }
-        }
-        return true;
-    }
-};
-```
-
-<a id="module-e695b0e68daee7bb93e69e842f4d496e742853686f72742056657273696f6e292e637070"></a>
-
-### MInt(Short Version)
-
-```cpp
-template <class T>
-T power(T a, i64 b) {
-    T res{1};
-    for (; b; b /= 2, a = a * a) {
-        if (b & 1) {
-            res = res * a;
-        }
-    }
-    return res;
-}
-
-template <int P>
-struct MInt {
-    i64 x;
-    MInt(): x{} {}
-    MInt(i64 x_): x(x_) {
-        x %= P;
-        if (x < 0) {
-            x += P;
-        }
-    }
-    MInt inv() const {
-        assert(x != 0);
-        return power(*this, P - 2);
-    }
-    MInt &operator+=(const MInt &o) {
-        x = (x + o.x) % P;
-        return *this;
-    }
-    MInt &operator-=(const MInt &o) {
-        x -= o.x;
-        if (x < 0) {
-            x += P;
-        }
-        return *this;
-    }
-    MInt &operator*=(const MInt &o) {
-        x = (x * o.x) % P;
-        return *this;
-    }
-    MInt &operator/=(const MInt &o) {
-        x = x * o.inv() % P;
-        return *this;
-    }
-    friend MInt operator+(MInt lhs, const MInt &rhs) { return lhs += rhs; }
-    friend MInt operator-(MInt lhs, const MInt &rhs) { return lhs -= rhs; }
-    friend MInt operator*(MInt lhs, const MInt &rhs) { return lhs *= rhs; }
-    friend MInt operator/(MInt lhs, const MInt &rhs) { return lhs /= rhs; }
-    friend ostream &operator<<(ostream &os, const MInt &a) { return os << a.x; }
-};
-
-constexpr int mod = 998244353;
-using Z = MInt<mod>;
-```
-
-<a id="module-e695b0e68daee7bb93e69e842f4d496e742e637070"></a>
-
-### MInt
-
-```cpp
-template<class T>
-constexpr T power(T a, i64 b) {
-    T res = 1;
-    for (; b; b /= 2, a *= a) {
-        if (b % 2) {
-            res *= a;
-        }
-    }
-    return res;
-}
-
-constexpr i64 mul(i64 a, i64 b, i64 p) {
-    i64 res = a * b - i64(1.L * a * b / p) * p;
-    res %= p;
-    if (res < 0) {
-        res += p;
-    }
-    return res;
-}
-
-template<i64 P>
-struct MLong {
-    i64 x;
-    constexpr MLong() : x{} {}
-    constexpr MLong(i64 x) : x{norm(x % getMod())} {}
-    
-    static i64 Mod;
-    constexpr static i64 getMod() {
-        if (P > 0) {
-            return P;
-        } else {
-            return Mod;
-        }
-    }
-    constexpr static void setMod(i64 Mod_) {
-        Mod = Mod_;
-    }
-    constexpr i64 norm(i64 x) const {
-        if (x < 0) {
-            x += getMod();
-        }
-        if (x >= getMod()) {
-            x -= getMod();
-        }
-        return x;
-    }
-    constexpr i64 val() const {
-        return x;
-    }
-    explicit constexpr operator i64() const {
-        return x;
-    }
-    constexpr MLong pow(i64 exp) const {
-        assert(exp >= 0);
-        return power(*this, exp);
-    }
-    constexpr MLong operator-() const {
-        MLong res;
-        res.x = norm(getMod() - x);
-        return res;
-    }
-    constexpr MLong inv() const {
-        assert(x != 0);
-        return power(*this, getMod() - 2);
-    }
-    constexpr MLong &operator*=(MLong rhs) & {
-        x = mul(x, rhs.x, getMod());
-        return *this;
-    }
-    constexpr MLong &operator+=(MLong rhs) & {
-        x = norm(x + rhs.x);
-        return *this;
-    }
-    constexpr MLong &operator-=(MLong rhs) & {
-        x = norm(x - rhs.x);
-        return *this;
-    }
-    constexpr MLong &operator/=(MLong rhs) & {
-        return *this *= rhs.inv();
-    }
-    friend constexpr MLong operator*(MLong lhs, MLong rhs) {
-        MLong res = lhs;
-        res *= rhs;
-        return res;
-    }
-    friend constexpr MLong operator+(MLong lhs, MLong rhs) {
-        MLong res = lhs;
-        res += rhs;
-        return res;
-    }
-    friend constexpr MLong operator-(MLong lhs, MLong rhs) {
-        MLong res = lhs;
-        res -= rhs;
-        return res;
-    }
-    friend constexpr MLong operator/(MLong lhs, MLong rhs) {
-        MLong res = lhs;
-        res /= rhs;
-        return res;
-    }
-    friend constexpr std::istream &operator>>(std::istream &is, MLong &a) {
-        i64 v;
-        is >> v;
-        a = MLong(v);
-        return is;
-    }
-    friend constexpr std::ostream &operator<<(std::ostream &os, const MLong &a) {
-        return os << a.val();
-    }
-    friend constexpr bool operator==(MLong lhs, MLong rhs) {
-        return lhs.val() == rhs.val();
-    }
-    friend constexpr bool operator!=(MLong lhs, MLong rhs) {
-        return lhs.val() != rhs.val();
-    }
-};
-
-template<>
-i64 MLong<0LL>::Mod = i64(1E18) + 9;
-
-template<int P>
-struct MInt {
-    int x;
-    constexpr MInt() : x{} {}
-    constexpr MInt(i64 x) : x{norm(x % getMod())} {}
-    
-    static int Mod;
-    constexpr static int getMod() {
-        if (P > 0) {
-            return P;
-        } else {
-            return Mod;
-        }
-    }
-    constexpr static void setMod(int Mod_) {
-        Mod = Mod_;
-    }
-    constexpr int norm(int x) const {
-        if (x < 0) {
-            x += getMod();
-        }
-        if (x >= getMod()) {
-            x -= getMod();
-        }
-        return x;
-    }
-    constexpr int val() const {
-        return x;
-    }
-    explicit constexpr operator int() const {
-        return x;
-    }
-    constexpr MInt pow(i64 exp) const {
-        assert(exp >= 0);
-        return power(*this, exp);
-    }
-    constexpr MInt operator-() const {
-        MInt res;
-        res.x = norm(getMod() - x);
-        return res;
-    }
-    constexpr MInt inv() const {
-        assert(x != 0);
-        return power(*this, getMod() - 2);
-    }
-    constexpr MInt &operator*=(MInt rhs) & {
-        x = 1LL * x * rhs.x % getMod();
-        return *this;
-    }
-    constexpr MInt &operator+=(MInt rhs) & {
-        x = norm(x + rhs.x);
-        return *this;
-    }
-    constexpr MInt &operator-=(MInt rhs) & {
-        x = norm(x - rhs.x);
-        return *this;
-    }
-    constexpr MInt &operator/=(MInt rhs) & {
-        return *this *= rhs.inv();
-    }
-    friend constexpr MInt operator*(MInt lhs, MInt rhs) {
-        MInt res = lhs;
-        res *= rhs;
-        return res;
-    }
-    friend constexpr MInt operator+(MInt lhs, MInt rhs) {
-        MInt res = lhs;
-        res += rhs;
-        return res;
-    }
-    friend constexpr MInt operator-(MInt lhs, MInt rhs) {
-        MInt res = lhs;
-        res -= rhs;
-        return res;
-    }
-    friend constexpr MInt operator/(MInt lhs, MInt rhs) {
-        MInt res = lhs;
-        res /= rhs;
-        return res;
-    }
-    friend constexpr std::istream &operator>>(std::istream &is, MInt &a) {
-        i64 v;
-        is >> v;
-        a = MInt(v);
-        return is;
-    }
-    friend constexpr std::ostream &operator<<(std::ostream &os, const MInt &a) {
-        return os << a.val();
-    }
-    friend constexpr bool operator==(MInt lhs, MInt rhs) {
-        return lhs.val() == rhs.val();
-    }
-    friend constexpr bool operator!=(MInt lhs, MInt rhs) {
-        return lhs.val() != rhs.val();
-    }
-};
-
-template<>
-int MInt<0>::Mod = 998244353;
-
-template<int V, int P>
-constexpr MInt<P> CInv = MInt<P>(V).inv();
-
-constexpr int mod = 998244353;
-using Z = MInt<mod>;
-```
-
-<a id="module-e695b0e68daee7bb93e69e842f4d6f5f416c676f726974686d2e637070"></a>
-
-### Mo\_Algorithm
-
-```cpp
-const int B = max(1, int(n / sqrt(q)));
-vector<int> bel(n + 1);
-for (int i = 1; i <= n; i++) {
-    bel[i] = (i + B - 1) / B;
-}
-
-// 将询问离线
-vector<array<int, 3>> Q(q);
-for (int i = 0; i < q; i++) {
-    int l, r;
-    cin >> l >> r;
-    Q[i] = {l, r, i};
-}
-
-// 按左端点所在块的编号为第一关键字，右端点为第二关键字排序
-sort(all(Q), [&](const auto &a, const auto &b) {
-    if (bel[a[0]] != bel[b[0]]) {
-        return bel[a[0]] < bel[b[0]];
-    }
-    if (bel[a[0]] & 1) {
-        return a[1] < b[1];
-    } else {
-        return a[1] > b[1];
-    }
-});
-
-vector<int> cnt(n + 1);
-int cur = 0;
-
-auto add = [&](int k) -> void {
-    if (cnt[a[k]]++ == 0) {
-        cur++;
-    }
-};
-
-auto del = [&](int k) -> void {
-    if (--cnt[a[k]] == 0) {
-        cur--;
-    }
-};
-
-vector<int> ans(q);
-
-// x, y 代表询问区间；l, r 代表当前所在区间
-// 先扩展，再删除
-for (int i = 0, l = 1, r = 0; i < q; i++) {
-    auto [x, y, id] = Q[i];
-    while (l > x) add(--l); // 左扩展
-    while (r < y) add(++r); // 右扩展
-    while (l < x) del(l++); // 左删除
-    while (r > y) del(r--); // 右删除
-    ans[id] = cur;
+    return min(i, j);
 }
 ```
 
-<a id="module-e695b0e68daee7bb93e69e842f524d512e637070"></a>
+<a id="module-e5ad97e7aca6e4b8b22f537472696e67486173682e637070"></a>
 
-### RMQ
+### StringHash
 
 ```cpp
-template<class T, class F>
-struct RMQ {
-    int n;
-    vector<T> a;
-    array<vector<T>, 20> f;
-    F fun;
-    RMQ() {}
-    RMQ(const vector<T> &a_, F &&fun_): a(a_), fun(fun_) {
-        n = int(a.size()) - 1;
-        f.fill(vector<T>(n + 1));
+constexpr u64 mod = (1ull << 61) - 1;
+mt19937_64 rnd(chrono::steady_clock::now().time_since_epoch().count());
+uniform_int_distribution<u64> dist(mod / 2, mod - 2);
+const u64 base = dist(rnd);
+
+struct StringHash {
+    vector<u64> h;
+    vector<u64> p;
+    StringHash() {}
+    StringHash(const string &s) {
+        init(s);
+    }
+    static u64 add(u64 a, u64 b) {
+        a += b;
+        if (a >= mod) a -= mod;
+        return a;
+    }
+    static u64 mul(u64 a, u64 b) {
+        u128 c = u128(a) * b;
+        return add(c >> 61, c & mod);
+    }
+    void init(const string &s) {
+        int n = s.size() - 1;
+        p.resize(n + 1);
+        h.resize(n + 1);
+        p[0] = 1;
         for (int i = 1; i <= n; i++) {
-            f[0][i] = a[i];
-        }
-        for (int j = 1; j <= __lg(n); j++) {
-            for (int i = 1; i + (1 << j) - 1 <= n; i++) {
-                f[j][i] = fun(f[j - 1][i], f[j - 1][i + (1 << (j - 1))]);
-            }
+            p[i] = mul(p[i - 1], base);
+            h[i] = mul(h[i - 1], base);
+            h[i] = add(h[i], s[i]);
         }
     }
-    T query(int l, int r) {
-        int k = __lg(r - l + 1);
-        return fun(f[k][l], f[k][r - (1 << k) + 1]);
-    }
+    u64 get(int l, int r) {
+        return add(h[r], mod - mul(h[l - 1], p[r - l + 1]));
+    } 
 };
 ```
 
-<a id="module-e695b0e68daee7bb93e69e842f5365676d656e74547265652e637070"></a>
+<a id="module-e5ad97e7aca6e4b8b22f547269652e637070"></a>
 
-### SegmentTree
+### Trie
 
 ```cpp
-template <class Info>
-struct SegmentTree {
-    int n;
-    vector<Info> info;
-    SegmentTree(): n(0) {}
-    SegmentTree(int N, Info v = Info()) {
-        init(vector<Info>(N + 1, v));
+constexpr int N = 1e6;
+
+int trie[N][26];
+int tot = 0;
+
+void clear() {
+    for (int i = 0; i <= tot; i++) {
+        fill(trie[i], trie[i] + 26, 0);
     }
-    SegmentTree(const vector<Info> &a) {
-        init(a);
+    tot = 0;
+}
+
+void insert(const string &s) {
+    int n = s.size();
+    int p = 0;
+    for (int i = 0; i < n; i++) {
+        int &nxt = trie[p][s[i] - 'a'];
+        if (nxt == 0) {
+            nxt = ++tot;
+        }
+        p = nxt;
     }
-    void init(const vector<Info> &a) {
-        n = int(a.size()) - 1;
-        info.assign(n << 2, Info());
-        auto build = [&](auto &&self, int id, int l, int r) {
-            if (l == r) {
-                info[id] = a[l];
-                return;
-            }
-            int mid = (l + r) >> 1;
-            self(self, id * 2, l, mid);
-            self(self, id * 2 + 1, mid + 1, r);
-            pushUp(id);
-        };
-        build(build, 1, 1, n);
+}
+```
+
+<a id="module-e5ad97e7aca6e4b8b22f7a5f616c676f726974686d2e637070"></a>
+
+### z\_algorithm
+
+```cpp
+vector<int> z_algorithm(const string &s) {
+    int n = s.size();
+    vector<int> z(n);
+    int l = 0, r = 0;
+    for (int i = 1; i < n; i++) {
+        if (i <= r) {
+            z[i] = min(z[i - l], r - i + 1);
+        }
+        while (i + z[i] < n && s[z[i]] == s[i + z[i]]) {
+            l = i, r = i + z[i];
+            z[i]++;
+        }
     }
-    void pushUp(int id) {
-        info[id] = info[id * 2] + info[id * 2 + 1];
-    }
-    void set(int id, int l, int r, int x, const Info &v) {
-        if (l == r) {
-            info[id] = v;
-            return;
-        }
-        int mid = (l + r) >> 1;
-        if (x <= mid){
-            set(id * 2, l, mid, x, v);
-        } else {
-            set(id * 2 + 1, mid + 1, r, x, v);
-        }
-        pushUp(id);
-    }
-    void set(int x, const Info &v) {
-        set(1, 1, n, x, v);
-    }
-    Info get(int x) {
-        return prod(x, x);
-    }
-    Info prod(int id, int l, int r, int x, int y) {
-        if (x > r || y < l) {
-            return Info();
-        }
-        if (x <= l && y >= r) {
-            return info[id];
-        }
-        int mid = (l + r) >> 1;
-        return prod(id * 2, l, mid, x, y) + prod(id * 2 + 1, mid + 1, r, x, y);
-    }
-    Info prod(int l, int r) {
-        return prod(1, 1, n, l, r);
-    }
-    template<class F>
-    int findFirst(int id, int l, int r, int x, int y, F &&pred) {
-        if (x > r || y < l) {
-            return -1;
-        }
-        if (x <= l && y >= r && !pred(info[id])) {
-            return -1;
-        }
-        if (l == r) {
-            return l;
-        }
-        int mid = (l + r) >> 1;
-        int res = findFirst(id * 2, l, mid, x, y, pred);
-        if (res == -1) {
-            res = findFirst(id * 2 + 1, mid + 1, r, x, y, pred);
-        }
-        return res;
-    }
-    template<class F>
-    int findFirst(int l, int r, F &&pred) {
-        return findFirst(1, 1, n, l, r, pred);
-    }
-    template<class F>
-    int findLast(int id, int l, int r, int x, int y, F &&pred) {
-        if (x > r || y < l) {
-            return -1;
-        }
-        if (x <= l && y >= r && !pred(info[id])) {
-            return -1;
-        }
-        if (l == r) {
-            return l;
-        }
-        int mid = (l + r) >> 1;
-        int res = findLast(id * 2 + 1, mid + 1, r, x, y, pred);
-        if (res == -1) {
-            res = findLast(id * 2, l, mid, x, y, pred);
+    return z;
+}
+```
+
+<a id="module-e585b6e4bb96"></a>
+
+## 其他
+
+<a id="module-e585b6e4bb962f6368616e67652e637070"></a>
+
+### change
+
+```cpp
+template <class T>
+bool chmin(T &a, const T &b) {
+	if (b < a) {
+		a = b;
+		return true;
+	}
+	return false;
+}
+
+template <class T>
+bool chmax(T &a, const T &b) {
+	if (b > a) {
+		a = b;
+		return true;
+	}
+	return false;
+}
+```
+
+<a id="module-e585b6e4bb962f686173682e637070"></a>
+
+### hash
+
+```cpp
+template <class T>
+void hash_combine(size_t& seed, const T& v) {
+    seed ^= hash<T>{}(v) 
+          + 0x9e3779b97f4a7c15ULL 
+          + (seed << 6) 
+          + (seed >> 2);
+}
+
+struct Hash {
+    size_t operator()(const array<int, 2> &a) const {
+        size_t res = 0;
+        for (auto &e : a) {
+            hash_combine(res, e);
         }
         return res;
-    }
-    template<class F>
-    int findLast(int l, int r, F &&pred) {
-        return findLast(1, 1, n, l, r, pred);
-    }
+    };
 };
 
-struct Info {
-    bool status;
+unordered_map<array<int, 2>, int, Hash> M;
+```
 
-    Info(): status(false) {}
+<a id="module-e585b6e4bb962f693132382e637070"></a>
 
-    friend Info operator+(const Info &a, const Info &b) {
-        if (!a.status) {
-            return b;
-        }
-        if (!b.status) {
-            return a;
-        }
-        Info c;
-        c.status = true;
+### i128
 
-        
+```cpp
+using i128 = __int128;
+istream& operator>>(istream& is, i128& n) {
+    string s;
+    is >> s;
+    n = 0;
+    bool negative = !s.empty() && s[0] == '-';
+    for(size_t i = negative || (!s.empty() && s[0] == '+'); i < s.size(); i++)
+        n = n * 10 + (negative ? -(s[i] - '0') : s[i] - '0');
+    return is;
+}
+ostream& operator<<(ostream& os, i128 n) {
+    using u128 = __uint128_t;
+    u128 value = n;
+    if(n < 0) os << '-', value = -value;
+    char digits[40];
+    int len = 0;
+    do {
+        digits[len++] = char('0' + value % 10);
+        value /= 10;
+    } while(value);
+    while(len) os << digits[--len];
+    return os;
+}
+```
 
-        return c;
+<a id="module-e585b6e4bb962f707265436f6d706c69652e747970"></a>
+
+### preComplie
+
+```typst
+- 创建 ./include/pch.hpp
+- 写入如下代码:
+`#pragma once`
+
+`#include <bits/stdc++.h>`
+
+- `cd ./include && g++ -std=c++20 pch.hpp -o pch.hpp.gch`
+
+- 后续编译其他代码时，加入 `-include "./include/pch.hpp"` 参数即可
+```
+
+<a id="module-e585b6e4bb962f72616e646f6d2e637070"></a>
+
+### random
+
+```cpp
+mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
+
+// 生成 [l, r] 范围内的数
+int rng(int l, int r) {
+    return rnd() % (r - l + 1) + l;
+}
+
+// 生成在 [l, r] 范围内的一个区间
+pair<int, int> interval(int l = 1, int r = 5) {
+    int x = rng(l, r);
+    int y = rng(l, r);
+    return minmax(x, y);
+}
+
+// 生成节点数在 [l, r] 范围内的一棵树
+void tree(int l = 1, int r = 5) {
+    int n = rng(l, r);
+    cout << n << '\n';
+
+    for (int u = 2; u <= n; u++) {
+        int v = rng(1, u - 1);
+        cout << u << " " << v << '\n';
+    }
+}
+
+// 生成节点数在 [l, r] 范围内的一个无向连通图
+void graph(int l = 1, int r = 5) {
+    int n = rng(l, r);
+    int m = rng(n - 1, n * (n - 1) / 2);
+    cout << n << " " << m << '\n';
+    set<pair<int, int>> S;
+    vector<pair<int, int>> edges;
+    for (int u = 2; u <= n; u++) {
+        int v = rng(1, u - 1);
+        S.insert({u, v});
+        edges.push_back({u, v});
     }
     
-};
+    for (int i = n; i <= m; i++) {
+        int u, v;
+        do {
+            u = rng(1, n);
+            v = rng(1, n);
+        } while (u == v || S.contains({u, v}));
+        S.insert({u, v});
+        edges.push_back({u, v});
+    }
+    for (int i = 0; i < m; i++) {
+        auto [u, v] = edges[i];
+        cout << u << " " << v << '\n';
+    }
+}
+```
+
+<a id="module-e585b6e4bb962f72756e2e7368"></a>
+
+### run
+
+```bash
+#!/bin/bash
+
+g++ -std=c++20 -include "./include/pch.hpp" $1.cpp -o $1
+
+./$1 < $1.in > $1.out
+
+cat $1.out
+```
+
+<a id="module-e585b6e4bb962f746573742e637070"></a>
+
+### test
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+
+    system("g++ -std=c++20 main.cpp -o main");
+    system("g++ -std=c++20 main__Good.cpp -o main__Good");
+    system("g++ -std=c++20 main__Generator.cpp -o main__Generator");
+
+    int t = 0;
+    while (true) {
+        cout << "test: " << t++ << endl;
+        system("./main__Generator > main.in");
+        system("./main < main.in > main.out");
+        system("./main__Good < main.in > main__Good.out");
+
+        // linux使用diff，windows使用fc
+        if (system("diff main.out main__Good.out")) {
+            cout << "WA" << endl;
+            return 0;
+        }
+    }
+
+    return 0;
+}
 ```
