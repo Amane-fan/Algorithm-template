@@ -1,4 +1,37 @@
 // All visual rules live here. The builder copies this next to templates.typ.
+#let book-cover(meta, opt, cover: none) = {
+  let accent = rgb("#293E80")
+  let ink = rgb("#20272D")
+  let muted = rgb("#748087")
+  let title-parts = meta.title.split(" の ")
+  let label(body) = text(size: 7.5pt, tracking: 1.5pt, fill: accent, body)
+  page(
+    paper: opt.paper,
+    margin: (x: 24mm, y: 22mm),
+    header: none, footer: none, numbering: none,
+  )[
+    #set text(font: opt.font, fill: ink, lang: "zh")
+    #set par(leading: 0pt)
+    #block(width: 100%, height: 100%)[
+      #place(top + center, label[ALGORITHMS / DATA STRUCTURES])
+      #if title-parts.len() == 2 {
+        place(top + center, dy: 27mm,
+          text(size: 15pt, fill: muted, title-parts.first() + " の"))
+      }
+      #place(top + center, dy: 40mm,
+        text(size: if title-parts.len() == 2 { 48pt } else { 36pt },
+          weight: "bold", tracking: -0.8pt, fill: accent,
+          if title-parts.len() == 2 { title-parts.last() } else { meta.title }))
+      #place(top + center, dy: 74mm, line(length: 10mm, stroke: 0.8pt + accent))
+      #if cover != none {
+        place(top + center, dy: 91mm, cover)
+      }
+      #place(top + center, dy: 225mm, text(size: 10pt, fill: muted, meta.subtitle))
+      #place(bottom + center, label[#meta.author])
+    ]
+  ]
+}
+
 #let book(config: (:), cover: none, body) = {
   let meta = config.book
   let opt = config.layout
@@ -70,32 +103,7 @@
     #it
   ]
 
-  // Cover has no running header or page number.
-  page(header: none, footer: none)[
-    #v(20mm)
-    #text(size: 8pt, tracking: 2pt, fill: accent, weight: "bold")[ALGORITHM LIBRARY]
-    #v(10mm)
-    #text(size: 32pt, weight: "bold", meta.title)
-    #v(5mm)
-    #text(size: 12pt, fill: muted, meta.subtitle)
-    #v(12mm)
-    #line(length: 28mm, stroke: 2pt + accent)
-    #v(12mm)
-    #if cover != none {
-      cover
-    } else {
-      block(width: 100%, height: 72mm, inset: (left: 10mm, top: 15mm), stroke: (left: 0.7pt + rule))[
-        #text(size: 42pt, fill: accent, weight: "light")[{ … }]
-        #v(8mm)
-        #text(size: 10pt, fill: muted)[#config.topic-count topics  /  #config.module-count modules]
-      ]
-    }
-    #v(1fr)
-    #line(length: 100%, stroke: 0.5pt + rule)
-    #v(5mm)
-    #grid(columns: (1fr, auto), text(size: 9pt, meta.author), text(size: 8pt, fill: muted)[TEMPLATES])
-    #v(8mm)
-  ]
+  book-cover(meta, opt, cover: cover)
 
   counter(page).update(1)
   [

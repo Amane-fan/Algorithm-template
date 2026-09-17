@@ -4,6 +4,7 @@
 .cache/
 tmp/
 dist/
+output/
 __pycache__/
 *.py[cod]
 .venv/
