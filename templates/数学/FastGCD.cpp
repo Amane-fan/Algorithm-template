@@ -1,80 +1,90 @@
+// O(n) 预处理时间和空间，O(1) 查询。
+// query(a, b) 要求 a, b >= 0 且 min(a, b) <= n。
+// FastGCD gcd(1000000);      // 预处理到 10^6，n 可以为 0。
+// int ans = gcd.query(12, 18); // 返回 6，两个参数可以交换。
+// gcd.init(2000000);         // 重新预处理到 2 * 10^6。
+// 也可先 FastGCD gcd; 再 gcd.init(n)。query(0, b) 返回 b。
 struct FastGCD {
-    int V;           // 值域上限
-    int RADIO;       // 阈值, 通常为 sqrt(V)
+    int n, m;
+    vector<array<int, 3>> f;
+    vector<int> g;
 
-    vector<int> np;          // np[i] > 0 表示 i 是合数
-    vector<int> prime;       // 存储找到的素数
-    vector<array<int, 3>> k; // k[i] 存储 i 的一种特殊三因子分解
-    vector<vector<int>> sg; // 预计算的小范围 GCD 表
-    int cnt;                      // 找到的素数数量
+    FastGCD(int N = 0) {
+        init(N);
+    }
 
-    /**
-     * @brief 构造函数，执行所有预处理操作。
-     * @param n 预处理的最大值 V。
-     *
-     * 预处理时间复杂度近似为 O(V * log(logV)) + O(RADIO^2)。
-     * 空间复杂度为 O(V)。
-     */
-    FastGCD(int n) : V(n), RADIO(static_cast<int>(floor(sqrt(n)))), cnt(0) {
-        np.resize(n + 1);
-        prime.resize(n + 1);
-        k.resize(n + 1);
-        sg.resize(RADIO + 1, vector<int>(RADIO + 1));
+    void init(int N) {
+        assert(N >= 0);
+        n = N;
+        m = 0;
+        while (1LL * (m + 1) * (m + 1) <= n) {
+            m++;
+        }
+        f.assign(size_t(n) + 1, {1, 1, 1});
 
-        k[1] = {1, 1, 1};
-        np[1] = 1;
-
-        for (int i = 2; i <= V; i++) {
-            if (!np[i]) {
-                prime[++cnt] = i;
-                k[i] = {1, 1, i};
+        vector<int> lp(size_t(n) + 1), prime;
+        for (int i = 2; i <= n; i++) {
+            if (lp[i] == 0) {
+                lp[i] = i;
+                prime.push_back(i);
             }
-            for (int j = 1; j <= cnt && 1LL * prime[j] * i <= V; j++) {
-                np[i * prime[j]] = 1;
-                auto &tmp = k[i * prime[j]];
-                
-                tmp[0] = k[i][0] * prime[j];
-                tmp[1] = k[i][1];
-                tmp[2] = k[i][2];
-
-                if (tmp[1] < tmp[0]) swap(tmp[1], tmp[0]);
-                if (tmp[2] < tmp[1]) swap(tmp[2], tmp[1]);
-                
-                if (i % prime[j] == 0) {
+            for (int p : prime) {
+                if (p > lp[i] || 1LL * i * p > n) {
                     break;
                 }
+                lp[i * p] = p;
             }
         }
 
-        for (int i = 0; i <= RADIO; i++) {
-            sg[i][0] = sg[0][i] = i;
+        // 三个因子有序，且每个合数因子都不超过 sqrt(n)。
+        for (int i = 2; i <= n; i++) {
+            f[i] = f[i / lp[i]];
+            f[i][0] *= lp[i];
+            if (f[i][0] > f[i][1]) {
+                swap(f[i][0], f[i][1]);
+            }
+            if (f[i][1] > f[i][2]) {
+                swap(f[i][1], f[i][2]);
+            }
         }
 
-        for (int i = 1; i <= RADIO; i++) {
+        g.assign(size_t(m + 1) * (m + 1), 0);
+        for (int i = 0; i <= m; i++) {
+            g[size_t(i) * (m + 1)] = g[i] = i;
+        }
+        for (int i = 1; i <= m; i++) {
             for (int j = 1; j <= i; j++) {
-                sg[i][j] = sg[j][i] = sg[j][i % j];
+                int d = g[size_t(j) * (m + 1) + i % j];
+                g[size_t(i) * (m + 1) + j] = d;
+                g[size_t(j) * (m + 1) + i] = d;
             }
         }
     }
 
     int query(int a, int b) const {
-        if (a == 0) return b;
-        if (b == 0) return a;
-
-        int g = 1;
-        for (int i = 0; i < 3; ++i) {
-            int ka = k[a][i];
-            if (ka == 1) continue;
-
-            int cf;
-            if (ka > RADIO) {
-                cf = (b % ka == 0) ? ka : 1;
-            } else {
-                cf = sg[ka][b % ka];
-            }
-            g *= cf;
-            b /= cf;
+        assert(a >= 0 && b >= 0);
+        if (a > b) {
+            swap(a, b);
         }
-        return g;
+        assert(a <= n);
+        if (a == 0) {
+            return b;
+        }
+
+        int ans = 1;
+        for (int p : f[a]) {
+            if (p == 1) {
+                continue;
+            }
+            int d;
+            if (p <= m) {
+                d = g[size_t(p) * (m + 1) + b % p];
+            } else {
+                d = b % p == 0 ? p : 1;
+            }
+            ans *= d;
+            b /= d;
+        }
+        return ans;
     }
 };

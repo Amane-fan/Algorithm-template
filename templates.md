@@ -637,78 +637,127 @@ struct Info {
 ### LiChaoTree
 
 ```cpp
-constexpr i64 inf = 2e18;
-template <class T>
+// LiChaoTree<i64> 求最小值，LiChaoTree<i64, false> 求最大值。
+// 横坐标为整数，定义域和线段范围均为闭区间。
+// add(k, b) 插入直线；add(l, r, k, b) 插入仅在 [l, r] 有效的线段。
+// query(x) 无有效直线时返回 T 的最大值（求最小值）或最低值（求最大值）。
+// k * x + b 在 T 中计算，可能溢出时使用 i128。
+template <class T = i64, bool isMin = true>
 struct LiChaoTree {
-	struct Line {
-		T a, b;
-		Line(): a(0), b(-inf) {
-		}
-		Line(T a, T b): a(a), b(b) {
-		}
-		T get(T x) {
-			return a * x + b;
-		}
-	};
-	int N;
-	vector<T> x;
-	vector<Line> ST;
-	LiChaoTree() {}
-	LiChaoTree(const vector<T> &x2) {
-		x = x2;
-		sort(x.begin(), x.end());
-		x.erase(unique(x.begin(), x.end()), x.end());
-		int N2 = x.size();
-		N = 1;
-		while (N < N2) {
-			N *= 2;
-		}
-		x.resize(N);
-		for (int i = N2; i < N; i++) {
-			x[i] = x[N2 - 1];
-		}
-		ST = vector<Line>(N * 2 - 1);
-	}
-	void addLine(Line L, int i, int l, int r) {
-		T la = L.get(x[l]);
-		T lb = ST[i].get(x[l]);
-		T ra = L.get(x[r - 1]);
-		T rb = ST[i].get(x[r - 1]);
-		if (la <= lb && ra <= rb) {
-			return;
-		} else if (la >= lb && ra >= rb) {
-			ST[i] = L;
-		} else {
-			int m = (l + r) / 2;
-			T ma = L.get(x[m]);
-			T mb = ST[i].get(x[m]);
-			if (ma > mb) {
-				swap(L, ST[i]);
-				swap(la, lb);
-				swap(ra, rb);
-			}
-			if (la > lb) {
-				addLine(L, i * 2 + 1, l, m);
-			}
-			if (ra > rb) {
-				addLine(L, i * 2 + 2, m, r);
-			}
-		}
-	}
-	void addLine(T a, T b) {
-		addLine(Line(a, b), 0, 0, N);
-	}
-	T getMax(T x2) {
-		int p = lower_bound(x.begin(), x.end(), x2) - x.begin();
-		p += N - 1;
-		T ans = -inf;
-		ans = max(ans, ST[p].get(x2));
-		while (p > 0) {
-			p = (p - 1) / 2;
-			ans = max(ans, ST[p].get(x2));
-		}
-		return ans;
-	}
+    struct Line {
+        T k = 0, b = 0;
+
+        T get(int x) const {
+            return k * T(x) + b;
+        }
+    };
+
+    struct Node {
+        Line line;
+        int ls = 0, rs = 0;
+        bool has = false;
+    };
+
+    int L, R, root;
+    vector<Node> tr;
+
+    LiChaoTree(int l = 0, int r = 0) {
+        init(l, r);
+    }
+
+    void init(int l, int r) {
+        assert(l <= r);
+        L = l;
+        R = r;
+        root = 0;
+        tr.assign(1, Node());
+    }
+
+    static bool better(T a, T b) {
+        return isMin ? a < b : a > b;
+    }
+
+    static T emptyValue() {
+        return isMin ? numeric_limits<T>::max() : numeric_limits<T>::lowest();
+    }
+
+    int newNode() {
+        tr.emplace_back();
+        return int(tr.size()) - 1;
+    }
+
+    int insert(int p, int l, int r, Line v) {
+        if (p == 0) {
+            p = newNode();
+        }
+        if (!tr[p].has) {
+            tr[p].line = v;
+            tr[p].has = true;
+            return p;
+        }
+        int mid = int(l + (i64(r) - l) / 2);
+        if (better(v.get(mid), tr[p].line.get(mid))) {
+            swap(v, tr[p].line);
+        }
+        if (l == r) {
+            return p;
+        }
+        if (better(v.get(l), tr[p].line.get(l))) {
+            int ls = insert(tr[p].ls, l, mid, v);
+            tr[p].ls = ls;
+        } else if (better(v.get(r), tr[p].line.get(r))) {
+            int rs = insert(tr[p].rs, mid + 1, r, v);
+            tr[p].rs = rs;
+        }
+        return p;
+    }
+
+    int insertSegment(int p, int l, int r, int x, int y, Line v) {
+        if (y < l || r < x) {
+            return p;
+        }
+        if (x <= l && r <= y) {
+            return insert(p, l, r, v);
+        }
+        if (p == 0) {
+            p = newNode();
+        }
+        int mid = int(l + (i64(r) - l) / 2);
+        int ls = insertSegment(tr[p].ls, l, mid, x, y, v);
+        tr[p].ls = ls;
+        int rs = insertSegment(tr[p].rs, mid + 1, r, x, y, v);
+        tr[p].rs = rs;
+        return p;
+    }
+
+    void add(T k, T b) {
+        root = insert(root, L, R, {k, b});
+    }
+
+    void add(int l, int r, T k, T b) {
+        if (l <= r) {
+            root = insertSegment(root, L, R, l, r, {k, b});
+        }
+    }
+
+    T query(int p, int l, int r, int x) const {
+        if (p == 0) {
+            return emptyValue();
+        }
+        T ans = tr[p].has ? tr[p].line.get(x) : emptyValue();
+        if (l == r) {
+            return ans;
+        }
+        int mid = int(l + (i64(r) - l) / 2);
+        T res = x <= mid ? query(tr[p].ls, l, mid, x)
+                        : query(tr[p].rs, mid + 1, r, x);
+        return better(res, ans) ? res : ans;
+    }
+
+    T query(int x) const {
+        assert(L <= x && x <= R);
+        return query(root, L, R, x);
+    }
 };
 ```
 
@@ -835,6 +884,78 @@ for (int i = 0, l = 1, r = 0; i < q; i++) {
     while (r > y) del(r--); // 右删除
     ans[id] = cur;
 }
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f524d5132442e637070"></a>
+
+### RMQ2D
+
+```cpp
+// 静态矩阵：预处理时间、空间 O(nm log n log m)，查询 O(1)，不支持单点修改。
+// a 为 (n + 1) * (m + 1) 的矩阵，有效下标从 1 开始，n, m >= 1。
+// auto op = [](int x, int y) { return min(x, y); }; // 求最大值时改为 max。
+// RMQ2D<int, decltype(op)> st(a, op);
+// int ans = st.query(x1, y1, x2, y2); // 闭区间 [x1, x2] * [y1, y2]。
+// st.init(a); // 矩阵变化后重新预处理，沿用原合并函数。
+// op 需满足结合律、交换律和幂等性，例如 min/max/gcd，不能用于求和。
+template <class T, class F>
+struct RMQ2D {
+    int n, m;
+    vector<int> lg;
+    vector<vector<vector<vector<T>>>> f;
+    F fun;
+
+    RMQ2D(const vector<vector<T>> &a, F fun_) : fun(fun_) {
+        init(a);
+    }
+
+    void init(const vector<vector<T>> &a) {
+        assert(a.size() >= 2 && a[1].size() >= 2);
+        n = int(a.size()) - 1;
+        m = int(a[1].size()) - 1;
+        for (int i = 1; i <= n; i++) {
+            assert(int(a[i].size()) == m + 1);
+        }
+        lg.assign(max(n, m) + 1, 0);
+        for (int i = 2; i < int(lg.size()); i++) {
+            lg[i] = lg[i / 2] + 1;
+        }
+
+        f.assign(lg[n] + 1, vector<vector<vector<T>>>(lg[m] + 1));
+        // f[p][q][i][j] 表示以 (i, j) 为左上角、大小为 2^p * 2^q 的矩形。
+        for (int p = 0; p <= lg[n]; p++) {
+            for (int q = 0; q <= lg[m]; q++) {
+                int rows = n - (1 << p) + 1;
+                int cols = m - (1 << q) + 1;
+                f[p][q].assign(rows + 1, vector<T>(cols + 1));
+                for (int i = 1; i <= rows; i++) {
+                    for (int j = 1; j <= cols; j++) {
+                        if (p == 0 && q == 0) {
+                            f[p][q][i][j] = a[i][j];
+                        } else if (p == 0) {
+                            int d = 1 << (q - 1);
+                            f[p][q][i][j] = fun(f[p][q - 1][i][j],
+                                               f[p][q - 1][i][j + d]);
+                        } else {
+                            int d = 1 << (p - 1);
+                            f[p][q][i][j] = fun(f[p - 1][q][i][j],
+                                               f[p - 1][q][i + d][j]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    T query(int x1, int y1, int x2, int y2) const {
+        assert(1 <= x1 && x1 <= x2 && x2 <= n);
+        assert(1 <= y1 && y1 <= y2 && y2 <= m);
+        int p = lg[x2 - x1 + 1], q = lg[y2 - y1 + 1];
+        int x = x2 - (1 << p) + 1, y = y2 - (1 << q) + 1;
+        return fun(fun(f[p][q][x1][y1], f[p][q][x1][y]),
+                   fun(f[p][q][x][y1], f[p][q][x][y]));
+    }
+};
 ```
 
 <a id="module-e695b0e68daee7bb93e69e842f524d512e637070"></a>
@@ -1919,6 +2040,26 @@ vector<int> g;
 }
 ```
 
+<a id="module-e59bbee8aeba2fe7ac9be58da1e5b094e6a0912e637070"></a>
+
+### 笛卡尔树
+
+```cpp
+// 小根堆
+vector<int> lc(n + 1), rc(n + 1);
+vector<int> stk;
+for (int i = 1; i <= n; i++) {
+    while (!stk.empty() && a[i] < a[stk.back()]) {
+        lc[i] = stk.back();
+        stk.pop_back();
+    }
+    if (!stk.empty()) {
+        rc[stk.back()] = i;
+    }
+    stk.push_back(i);
+}
+```
+
 <a id="module-e695b0e5ada6"></a>
 
 ## 数学
@@ -2008,11 +2149,75 @@ T ceil_div(const T &a, const T &b) {
 }
 ```
 
+<a id="module-e695b0e5ada62f65784352542e637070"></a>
+
+### exCRT
+
+```cpp
+// 解同余方程组 x ≡ a[i][0] (mod a[i][1])，模数不要求两两互质。
+// a 中每项为 {余数, 模数}，不保留下标 0；余数可为负，模数必须为正。
+// 返回 {最小非负解 r, 所有模数的最小公倍数 m}，通解为 x = r + k * m。
+// 无解返回 {0, 0}；空方程组返回 {0, 1}。
+// 要求合并过程中的最小公倍数不超过 i64 上限，中间乘法使用 i128。
+// k 个方程的时间复杂度为 O(k log M)，M 为模数的最大值。
+array<i64, 2> exCRT(const vector<array<i64, 2>> &a) {
+    auto exgcd = [](auto &&self, i128 x, i128 y) -> array<i128, 3> {
+        if (y == 0) {
+            return {x, 1, 0};
+        }
+        auto [g, u, v] = self(self, y, x % y);
+        return {g, v, u - x / y * v};
+    };
+
+    i64 r = 0, m = 1;
+    for (auto [b, mod] : a) {
+        assert(mod > 0);
+        b %= mod;
+        if (b < 0) {
+            b += mod;
+        }
+
+        auto [g, x, y] = exgcd(exgcd, m, mod);
+        i128 d = i128(b) - r;
+        if (d % g != 0) {
+            return {0, 0};
+        }
+
+        // 令新解为 r + m * t，求 (m / g) * t ≡ d / g (mod mod / g)。
+        i128 q = mod / g;
+        i128 t = d / g * x % q;
+        if (t < 0) {
+            t += q;
+        }
+        i128 next = i128(m) * q;
+        assert(next <= numeric_limits<i64>::max());
+        r = i64((i128(r) + i128(m) * t) % next);
+        m = i64(next);
+    }
+    return {r, m};
+}
+
+/*
+vector<array<i64, 2>> a = {{2, 6}, {5, 9}};
+auto [r, m] = exCRT(a); // r = 14, m = 18，即 x = 14 + 18k。
+if (m == 0) {
+    cout << "No solution\n";
+} else {
+    cout << r << '\n'; // 最小非负解。
+    // 若要求最小正解，输出 (r == 0 ? m : r)。
+}
+*/
+```
+
 <a id="module-e695b0e5ada62f65786763642e637070"></a>
 
 ### exgcd
 
 ```cpp
+// 返回 {g, x, y}，满足 a * x + b * y = g。
+// 按 a, b >= 0 使用时，g = gcd(a, b)；负数输入不保证 g >= 0。
+// T 使用有符号整数类型，如 i64、i128；时间复杂度 O(log(max(a, b)))。
+// exgcd(0, 0) 返回 {0, 1, 0}，此时不能用 g 做取模或除法。
 template <class T>
 array<T, 3> exgcd(const T &a, const T &b) {
     if (b == T(0)) {
@@ -2021,6 +2226,40 @@ array<T, 3> exgcd(const T &a, const T &b) {
     auto [g, x, y] = exgcd(b, a % b);
     return {g, y, x - a / b * y};
 }
+
+/*
+// 1. 求 gcd 和一组贝祖系数。
+i64 a = 30, b = 18;
+auto [g, x, y] = exgcd(a, b); // g = 6，且 30 * x + 18 * y = 6。
+
+// 2. 求 a 在模 mod 下的逆元：要求 mod > 1，且 gcd(a, mod) == 1。
+// 先将 a 规范到 [0, mod)，mod 不要求是质数。
+{
+    i64 a = 3, mod = 11;
+    a %= mod;
+    if (a < 0) {
+        a += mod;
+    }
+    auto [g, x, y] = exgcd(a, mod);
+    if (g == 1) {
+        i64 inv = x % mod;
+        if (inv < 0) {
+            inv += mod;
+        }
+        cout << inv << '\n'; // 4；g != 1 时不存在逆元。
+    }
+}
+
+// 3. 解 a * X + b * Y = c：要求 a, b 不同时为 0。
+// 当且仅当 c % g == 0 时有整数解。
+i64 c = 12;
+if (c % g == 0) {
+    i128 X = i128(x) * (c / g);
+    i128 Y = i128(y) * (c / g);
+    // 通解：X + (b / g) * t，Y - (a / g) * t，其中 t 为任意整数。
+}
+// a == b == 0 时单独判断：c == 0 则任意整数对都是解，否则无解。
+*/
 ```
 
 <a id="module-e695b0e5ada62f466173744743442e637070"></a>
@@ -2028,84 +2267,94 @@ array<T, 3> exgcd(const T &a, const T &b) {
 ### FastGCD
 
 ```cpp
+// O(n) 预处理时间和空间，O(1) 查询。
+// query(a, b) 要求 a, b >= 0 且 min(a, b) <= n。
+// FastGCD gcd(1000000);      // 预处理到 10^6，n 可以为 0。
+// int ans = gcd.query(12, 18); // 返回 6，两个参数可以交换。
+// gcd.init(2000000);         // 重新预处理到 2 * 10^6。
+// 也可先 FastGCD gcd; 再 gcd.init(n)。query(0, b) 返回 b。
 struct FastGCD {
-    int V;           // 值域上限
-    int RADIO;       // 阈值, 通常为 sqrt(V)
+    int n, m;
+    vector<array<int, 3>> f;
+    vector<int> g;
 
-    vector<int> np;          // np[i] > 0 表示 i 是合数
-    vector<int> prime;       // 存储找到的素数
-    vector<array<int, 3>> k; // k[i] 存储 i 的一种特殊三因子分解
-    vector<vector<int>> sg; // 预计算的小范围 GCD 表
-    int cnt;                      // 找到的素数数量
+    FastGCD(int N = 0) {
+        init(N);
+    }
 
-    /**
-     * @brief 构造函数，执行所有预处理操作。
-     * @param n 预处理的最大值 V。
-     *
-     * 预处理时间复杂度近似为 O(V * log(logV)) + O(RADIO^2)。
-     * 空间复杂度为 O(V)。
-     */
-    FastGCD(int n) : V(n), RADIO(static_cast<int>(floor(sqrt(n)))), cnt(0) {
-        np.resize(n + 1);
-        prime.resize(n + 1);
-        k.resize(n + 1);
-        sg.resize(RADIO + 1, vector<int>(RADIO + 1));
+    void init(int N) {
+        assert(N >= 0);
+        n = N;
+        m = 0;
+        while (1LL * (m + 1) * (m + 1) <= n) {
+            m++;
+        }
+        f.assign(size_t(n) + 1, {1, 1, 1});
 
-        k[1] = {1, 1, 1};
-        np[1] = 1;
-
-        for (int i = 2; i <= V; i++) {
-            if (!np[i]) {
-                prime[++cnt] = i;
-                k[i] = {1, 1, i};
+        vector<int> lp(size_t(n) + 1), prime;
+        for (int i = 2; i <= n; i++) {
+            if (lp[i] == 0) {
+                lp[i] = i;
+                prime.push_back(i);
             }
-            for (int j = 1; j <= cnt && 1LL * prime[j] * i <= V; j++) {
-                np[i * prime[j]] = 1;
-                auto &tmp = k[i * prime[j]];
-                
-                tmp[0] = k[i][0] * prime[j];
-                tmp[1] = k[i][1];
-                tmp[2] = k[i][2];
-
-                if (tmp[1] < tmp[0]) swap(tmp[1], tmp[0]);
-                if (tmp[2] < tmp[1]) swap(tmp[2], tmp[1]);
-                
-                if (i % prime[j] == 0) {
+            for (int p : prime) {
+                if (p > lp[i] || 1LL * i * p > n) {
                     break;
                 }
+                lp[i * p] = p;
             }
         }
 
-        for (int i = 0; i <= RADIO; i++) {
-            sg[i][0] = sg[0][i] = i;
+        // 三个因子有序，且每个合数因子都不超过 sqrt(n)。
+        for (int i = 2; i <= n; i++) {
+            f[i] = f[i / lp[i]];
+            f[i][0] *= lp[i];
+            if (f[i][0] > f[i][1]) {
+                swap(f[i][0], f[i][1]);
+            }
+            if (f[i][1] > f[i][2]) {
+                swap(f[i][1], f[i][2]);
+            }
         }
 
-        for (int i = 1; i <= RADIO; i++) {
+        g.assign(size_t(m + 1) * (m + 1), 0);
+        for (int i = 0; i <= m; i++) {
+            g[size_t(i) * (m + 1)] = g[i] = i;
+        }
+        for (int i = 1; i <= m; i++) {
             for (int j = 1; j <= i; j++) {
-                sg[i][j] = sg[j][i] = sg[j][i % j];
+                int d = g[size_t(j) * (m + 1) + i % j];
+                g[size_t(i) * (m + 1) + j] = d;
+                g[size_t(j) * (m + 1) + i] = d;
             }
         }
     }
 
     int query(int a, int b) const {
-        if (a == 0) return b;
-        if (b == 0) return a;
-
-        int g = 1;
-        for (int i = 0; i < 3; ++i) {
-            int ka = k[a][i];
-            if (ka == 1) continue;
-
-            int cf;
-            if (ka > RADIO) {
-                cf = (b % ka == 0) ? ka : 1;
-            } else {
-                cf = sg[ka][b % ka];
-            }
-            g *= cf;
-            b /= cf;
+        assert(a >= 0 && b >= 0);
+        if (a > b) {
+            swap(a, b);
         }
-        return g;
+        assert(a <= n);
+        if (a == 0) {
+            return b;
+        }
+
+        int ans = 1;
+        for (int p : f[a]) {
+            if (p == 1) {
+                continue;
+            }
+            int d;
+            if (p <= m) {
+                d = g[size_t(p) * (m + 1) + b % p];
+            } else {
+                d = b % p == 0 ? p : 1;
+            }
+            ans *= d;
+            b /= d;
+        }
+        return ans;
     }
 };
 ```
@@ -3380,9 +3629,115 @@ g++ -std=c++20 -include "./include/pch.hpp" $1.cpp -o $1
 cat $1.out
 ```
 
-<a id="module-e585b6e4bb962f746573742e637070"></a>
+<a id="module-e585b6e4bb962fe4bd8de8bf90e7ae97e5ba93e587bde695b02e747970"></a>
 
-### test
+### 位运算库函数
+
+````typst
+= GNU C++17 内建函数
+
+以下按竞赛环境中 `u32 = unsigned` 为 32 位、`u64 = unsigned long long` 为 64 位说明。
+位下标从最低位开始计数，最低位下标为 0。
+
+#table(
+  columns: (1fr, 1fr, 1.6fr),
+  [`unsigned int` 参数], [`unsigned long long` 参数], [含义],
+  [`__builtin_popcount(x)`], [`__builtin_popcountll(x)`], [二进制中 1 的个数],
+  [`__builtin_parity(x)`], [`__builtin_parityll(x)`], [1 的个数模 2],
+  [`__builtin_clz(x)`], [`__builtin_clzll(x)`], [从最高位开始连续 0 的个数],
+  [`__builtin_ctz(x)`], [`__builtin_ctzll(x)`], [从最低位开始连续 0 的个数],
+)
+
+- 这些函数都返回 `int`。`popcount(0)`、`parity(0)` 均为 0。
+- *`clz(0)`、`ctz(0)` 及其 `ll` 版本行为未定义，必须先判零。*
+- 后缀 `l` 对应 `unsigned long`，其位宽依平台而定；64 位数直接用 `ll` 版本。
+- 传入 `u64` 不会让无后缀函数自动变成 64 位版本，超出 `unsigned int` 的高位会被截断。
+
+```cpp
+u64 x = 40;                         // 二进制 101000
+int cnt = __builtin_popcountll(x);  // 2
+int parity = __builtin_parityll(x); // 0
+int lz = __builtin_clzll(x);        // 58
+int tz = __builtin_ctzll(x);        // 3，也是最低位 1 的下标
+int hi = 63 - __builtin_clzll(x);   // 5，也是 floor(log2(x))
+
+// 允许 x == 0 的写法：不存在有效位时，下标记为 -1。
+int low = x ? __builtin_ctzll(x) : -1;
+int high = x ? 63 - __builtin_clzll(x) : -1;
+int width = x ? 64 - __builtin_clzll(x) : 0;
+```
+
+`__builtin_ffs(int)` / `__builtin_ffsll(long long)` 返回最低位 1 的位置，*从 1 开始计数*；输入 0 时返回 0。它们接收有符号参数。
+
+```cpp
+int pos = __builtin_ffsll(40LL); // 4，相当于非零时 ctzll(x) + 1
+int zero = __builtin_ffsll(0LL); // 0
+```
+
+= C++20 标准库 <bit>
+
+需要 `#include <bit>` 并启用 C++20。下列函数接收无符号整数；使用 `40U`、`40ULL` 或显式转换，不能直接传入有符号的 `40`。
+
+```cpp
+u64 x = 40;
+int cnt = std::popcount(x);     // 2，1 的个数
+int lz = std::countl_zero(x);   // 58，前导 0 的个数
+int tz = std::countr_zero(x);   // 3，末尾 0 的个数
+int lo = std::countl_one(x);    // 0，前导 1 的个数
+int to = std::countr_one(7U);   // 3，末尾 1 的个数
+
+bool one = std::has_single_bit(x); // false，是否为 2 的整数次幂
+int width = std::bit_width(x);     // 6，表示 x 所需的二进制位数
+u64 down = std::bit_floor(x);      // 32，不超过 x 的最大 2 的幂
+u64 up = std::bit_ceil(x);         // 64，不小于 x 的最小 2 的幂
+
+u64 left = std::rotl(x, 2);    // 160，按完整 64 位循环左移
+u64 right = std::rotr(x, 3);   // 5，按完整 64 位循环右移
+```
+
+- `countl_zero(0ULL)`、`countr_zero(0ULL)` 返回 64；对 `0U` 返回 32。
+- `countl_one(~0ULL)`、`countr_one(~0ULL)` 返回 64。
+- `bit_width(0U) = 0`，`bit_floor(0U) = 0`，`bit_ceil(0U) = 1`，`has_single_bit(0U) = false`。
+- *`bit_ceil` 的结果必须能用输入类型表示。* 对 `u64`，输入不能超过 `1ULL << 63`；对 `u32`，不能超过 `1U << 31`。
+- `rotl` / `rotr` 会把移位量对类型位宽取模；负数表示向相反方向旋转。循环移位会把移出的位补回另一端。
+
+= 常用组合与边界
+
+下面仍按 64 位无符号数说明，GNU C++17 即可使用。
+
+```cpp
+u64 x = 40, y = 24;
+u64 lowbit = x & -x;                    // 8；x == 0 时结果为 0
+u64 rest = x & (x - 1);                 // 32，清除最低位的 1
+bool one = x != 0 && (x & (x - 1)) == 0; // 是否为 2 的幂
+int dist = __builtin_popcountll(x ^ y); // 2，两个数不同的二进制位数
+
+int k = 5; // 要求 0 <= k < 64
+bool bit = (x >> k) & 1ULL; // 检查第 k 位
+u64 a = x | (1ULL << k);   // 将第 k 位置 1
+u64 b = x & ~(1ULL << k);  // 将第 k 位置 0
+u64 c = x ^ (1ULL << k);   // 翻转第 k 位
+
+int n = 64; // 要求 0 <= n <= 64
+u64 mask = n == 64 ? ~0ULL : (1ULL << n) - 1; // 低 n 位全为 1
+```
+
+- `1 << k` 的左操作数是 `int`，处理 64 位掩码应写 `1ULL << k`。
+- 普通 `<<` / `>>` 的移位量不能为负，也不能达到左操作数提升后的位宽；`1ULL << 64` 不合法。
+- GNU 的 `__builtin_popcountll` 只处理 `unsigned long long`。统计 `u128` 时需拆成两个 64 位数：
+
+```cpp
+u128 x = (u128(1) << 100) | 7;
+int cnt = __builtin_popcountll(u64(x))
+        + __builtin_popcountll(u64(x >> 64)); // 4
+```
+
+参考：#link("https://gcc.gnu.org/onlinedocs/gcc-15.1.0/gcc/Bit-Operation-Builtins.html")[GCC 内建函数文档]、#link("https://eel.is/c++draft/bit")[C++ 标准草案 <bit>]。
+````
+
+<a id="module-e585b6e4bb962fe5afb9e68b8d2e637070"></a>
+
+### 对拍
 
 ```cpp
 #include <bits/stdc++.h>
