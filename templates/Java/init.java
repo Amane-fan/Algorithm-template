@@ -1,9 +1,11 @@
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.io.*;
 
 public class Main {
     static FastReader fr = new FastReader();
-    static PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    static PrintWriter pw = new PrintWriter(new OutputStreamWriter(System.out));
+    static StringBuilder sb = new StringBuilder();
 
     public static void main(String[] args) throws IOException {
 
@@ -13,9 +15,20 @@ public class Main {
 }
 
 class FastReader {
-    private final InputStream in = System.in;
+    private final InputStream in;
     private final byte[] buffer = new byte[1 << 16];
     private int ptr = 0, len = 0;
+
+    private final ByteArrayOutputStream text =
+            new ByteArrayOutputStream(128);
+
+    FastReader() {
+        this(System.in);
+    }
+
+    FastReader(InputStream in) {
+        this.in = in;
+    }
 
     private int read() throws IOException {
         if (ptr >= len) {
@@ -23,64 +36,90 @@ class FastReader {
             ptr = 0;
             if (len <= 0) return -1;
         }
-        return buffer[ptr++];
+        return buffer[ptr++] & 0xff;
+    }
+
+    private void unread(int c) {
+        if (c != -1) ptr--;
+    }
+
+    private int skipWhitespace() throws IOException {
+        int c;
+        do {
+            c = read();
+        } while (c != -1 && c <= ' ');
+        return c;
     }
 
     int nextInt() throws IOException {
-        int c;
-        do {
-            c = read();
-        } while (c <= ' ');
+        int c = skipWhitespace();
+        if (c == -1) throw new EOFException("没有更多整数");
 
-        int sign = 1;
-        if (c == '-') {
-            sign = -1;
-            c = read();
-        }
+        boolean negative = c == '-';
+        if (c == '-' || c == '+') c = read();
 
         int val = 0;
-        while (c > ' ') {
-            val = val * 10 + (c - '0');
+        while (c >= '0' && c <= '9') {
+            val = val * 10 - (c - '0');
             c = read();
         }
-        return val * sign;
+        unread(c);
+
+        return negative ? val : -val;
     }
 
     long nextLong() throws IOException {
-        int c;
-        do {
-            c = read();
-        } while (c <= ' ');
+        int c = skipWhitespace();
+        if (c == -1) throw new EOFException("没有更多整数");
 
-        int sign = 1;
-        if (c == '-') {
-            sign = -1;
-            c = read();
-        }
+        boolean negative = c == '-';
+        if (c == '-' || c == '+') c = read();
 
         long val = 0;
-        while (c > ' ') {
-            val = val * 10 + (c - '0');
+        while (c >= '0' && c <= '9') {
+            val = val * 10 - (c - '0');
             c = read();
         }
-        return val * sign;
+        unread(c);
+
+        return negative ? val : -val;
     }
 
     String next() throws IOException {
-        int c;
-        do {
-            c = read();
-        } while (c <= ' ');
+        int c = skipWhitespace();
+        if (c == -1) return null;
 
-        StringBuilder sb = new StringBuilder();
-        while (c > ' ') {
-            sb.append((char) c);
+        text.reset();
+        while (c != -1 && c > ' ') {
+            text.write(c);
             c = read();
         }
-        return sb.toString();
+        unread(c);
+
+        return text.toString(StandardCharsets.UTF_8.name());
+    }
+
+    String nextLine() throws IOException {
+        int c = read();
+        if (c == -1) return null;
+
+        text.reset();
+        while (c != -1 && c != '\n' && c != '\r') {
+            text.write(c);
+            c = read();
+        }
+
+        if (c == '\r') {
+            int next = read();
+            if (next != '\n') unread(next);
+        }
+
+        return text.toString(StandardCharsets.UTF_8.name());
     }
 
     double nextDouble() throws IOException {
-        return Double.parseDouble(next());
+        String s = next();
+        if (s == null) throw new EOFException("没有更多浮点数");
+        return Double.parseDouble(s);
     }
 }
