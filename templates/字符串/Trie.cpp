@@ -1,23 +1,25 @@
-constexpr int N = 1e6;
+struct Node {
+    int cnt;
+    array<int, 26> nxt;
+    Node(): cnt(0), nxt{} {}
+};
 
-int trie[N][26];
-int tot = 0;
+vector<Node> trie{Node{}};
 
-void clear() {
-    for (int i = 0; i <= tot; i++) {
-        fill(trie[i], trie[i] + 26, 0);
-    }
-    tot = 0;
-}
+auto newNode = [&]() -> int {
+    trie.push_back(Node{});
+    return (int)trie.size() - 1;
+};
 
-void insert(const string &s) {
-    int n = s.size();
-    int p = 0;
-    for (int i = 0; i < n; i++) {
-        int &nxt = trie[p][s[i] - 'a'];
+auto insert = [&](const string &s) -> void {
+    int u = 0;
+    for (auto c : s) {
+        int nxt = trie[u].nxt[c - 'a'];
         if (nxt == 0) {
-            nxt = ++tot;
+            nxt = newNode();
+            trie[u].nxt[c - 'a'] = nxt;
         }
-        p = nxt;
+        u = nxt;
     }
-}
+    trie[u].cnt++;
+};
