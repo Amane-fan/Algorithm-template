@@ -3366,39 +3366,37 @@ auto [x, y] = restore(u1, v1);                    // 还原为 (1, 2)
 ### KMP
 
 ```cpp
-vector<int> pre_function(const string &t) {
-    int m = t.size();
-    vector<int> pi(m);
-    for (int i = 1; i < m; i++) {
+vector<int> kmp(const string &s) {
+    int n = (int)s.size() - 1;
+    vector<int> pi(n + 1);
+    for (int i = 2; i <= n; i++) {
         int j = pi[i - 1];
-        while (j > 0 && t[i] != t[j]) {
-            j = pi[j - 1];
+        while (j > 0 && s[j + 1] != s[i]) {
+            j = pi[j];
         }
-        if (t[i] == t[j]) {
-            j++;
+        if (s[j + 1] == s[i]) {
+            pi[i] = j + 1;
         }
-        pi[i] = j;
     }
     return pi;
 }
 
-vector<int> KMP(const string &s, const string &t) {
-    int n = s.size(), m = t.size();
-    vector<int> pi = pre_function(t);
-    vector<int> res;
-    for (int i = 0, j = 0; i < n; i++) {
-        while (j > 0 && s[i] != t[j]) {
-            j = pi[j - 1];
-        }
-        if (s[i] == t[j]) {
-            j++;
-        }
-        if (j == m) {
-            res.push_back(i - j + 1);
-            j = pi[j - 1];
+vector<array<int, 26>> automaton(const string &s) {
+    int n = (int)s.size() - 1;
+    auto pi = kmp(s);
+    vector<array<int, 26>> go(n + 1);
+    for (int i = 0; i <= n; i++) {
+        for (int c = 0; c < 26; c++) {
+            if (i < n && s[i + 1] == c + 'a') {
+                go[i][c] = i + 1;
+            } else if (i == 0) {
+                go[i][c] = 0;
+            } else {
+                go[i][c] = go[pi[i]][c];
+            }
         }
     }
-    return res;
+    return go;
 }
 ```
 
