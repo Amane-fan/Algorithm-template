@@ -39,8 +39,7 @@ struct MInt {
         return *this;
     }
     MInt &operator/=(const MInt &o) {
-        x = x * o.inv() % P;
-        return *this;
+        return *this *= o.inv();
     }
     friend MInt operator+(MInt lhs, const MInt &rhs) { return lhs += rhs; }
     friend MInt operator-(MInt lhs, const MInt &rhs) { return lhs -= rhs; }
