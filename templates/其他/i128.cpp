@@ -1,23 +1,21 @@
 using i128 = __int128;
-istream& operator>>(istream& is, i128& n) {
+istream &operator>>(istream &is, i128 &n) {
     string s;
-    is >> s;
+    if (!(is >> s)) return is;
     n = 0;
-    bool negative = !s.empty() && s[0] == '-';
-    for(size_t i = negative || (!s.empty() && s[0] == '+'); i < s.size(); i++)
-        n = n * 10 + (negative ? -(s[i] - '0') : s[i] - '0');
+    for (int i = s[0] == '-' || s[0] == '+'; i < (int)s.size(); i++) {
+        n = n * 10 - (s[i] - '0');
+    }
+    if (s[0] != '-') n = -n;
     return is;
 }
-ostream& operator<<(ostream& os, i128 n) {
-    using u128 = __uint128_t;
-    u128 value = n;
-    if(n < 0) os << '-', value = -value;
-    char digits[40];
-    int len = 0;
+ostream &operator<<(ostream &os, i128 n) {
+    if (n < 0) os << '-';
+    string s;
     do {
-        digits[len++] = char('0' + value % 10);
-        value /= 10;
-    } while(value);
-    while(len) os << digits[--len];
-    return os;
+        s += char('0' + abs(int(n % 10)));
+        n /= 10;
+    } while (n);
+    reverse(s.begin(), s.end());
+    return os << s;
 }
