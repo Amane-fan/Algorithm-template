@@ -1,29 +1,36 @@
-constexpr i64 inf = 1e18;
-vector<i64> spfa(const vector<vector<array<int, 2>>> &adj, int s) {
-    int n = adj.size() - 1;
+// 点编号 [1, n]，有向边 adj[u].push_back({w, v})，最坏 O(nm)。
+// s > 0：单源最短路，不可达为 inf；s = 0：所有点作源，检查全图负环。
+// 有源点可达的负环返回空 vector；全图判负环用 spfa(adj).empty()。
+constexpr i64 inf = numeric_limits<i64>::max() / 3;
+vector<i64> spfa(const vector<vector<array<int, 2>>> &adj, int s = 0) {
+    int n = int(adj.size()) - 1;
     vector<i64> dis(n + 1, inf);
     vector<int> cnt(n + 1);
-    vector<bool> vis(n + 1);
-    dis[s] = 0;
-    vis[s] = true;
+    vector<bool> inq(n + 1);
     queue<int> q;
-    q.push(s);
+    for (int i = 1; i <= n; i++) {
+        if (s == 0 || i == s) {
+            dis[i] = 0;
+            inq[i] = true;
+            q.push(i);
+        }
+    }
     while (!q.empty()) {
         int u = q.front();
         q.pop();
-        vis[u] = false;
+        inq[u] = false;
         for (auto [w, v] : adj[u]) {
-            if (dis[v] > dis[u] + w) {
-                dis[v] = dis[u] + w;
-                cnt[v] = cnt[u] + 1;
-                // 判断负环，要写>=点的个数，如果0位置也有点要写>=n+1
-                if (cnt[v] >= n) {
-                    return {};
-                }
-                if (!vis[v]) {
-                    q.push(v);
-                    vis[v] = true;
-                }
+            if (dis[v] <= dis[u] + w) {
+                continue;
+            }
+            dis[v] = dis[u] + w;
+            cnt[v] = cnt[u] + 1; // 当前松弛路径的边数，不是入队次数。
+            if (cnt[v] >= n) {
+                return {};
+            }
+            if (!inq[v]) {
+                inq[v] = true;
+                q.push(v);
             }
         }
     }
