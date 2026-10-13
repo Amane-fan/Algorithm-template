@@ -4,7 +4,7 @@ output = "."
 
 # 同时从 Markdown 和 Typst 排除；支持 *, ?, **，目录名以 / 结尾。
 # 例如：["Others/test.cpp", "**/draft*", "Java/"]
-exclude = ["Java/", "**/MInt.cpp", "**/Matrix(MInt).cpp", "**/Comb(MInt).cpp", "数据结构/DynamicBitset.cpp"]
+exclude = ["Java/", "**/MInt.cpp", "**/Matrix(MInt).cpp", "**/Comb(MInt).cpp"]
 
 [book]
 title = "Amane の Templates"
