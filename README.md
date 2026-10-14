@@ -108,7 +108,7 @@ subtitle = "Algorithms & Data Structures"
 author = "Amane"
 
 [cover]
-image = "assets/cover.jpg"   # PNG / JPEG / SVG，留空为文字封面
+image = "assets/cover.jpg"   # 仅 original 设计使用；PNG / JPEG / SVG，留空为文字封面
 
 [layout]
 code_size = 8.0             # pt
@@ -120,9 +120,9 @@ section_new_page = false
 accent = "315C61"
 ```
 
-编辑已有表内的配置项，不要重复声明同名 TOML 表。封面图片位于标题下方，在固定区域内保持比例完整显示；未提供图片也能生成完整封面。
+编辑已有表内的配置项，不要重复声明同名 TOML 表。选择 `original` 设计时，封面图片位于标题下方，在固定区域内保持比例完整显示；未提供图片也能生成完整封面。
 
-当前封面采用「层序」设计：居中标题、靛蓝渐层纸雕与大留白。主视觉位于 `assets/cover-art.png`，生图提示词记录在 `assets/cover-art.prompt.txt`。整本封面和独立封面共用 `styles/book.typ` 中的 `book-cover`；修改标题、作者或封面图片后，重新执行 `uv run build.py pdf` 即可更新模板册。
+当前封面采用亮色 C「星图之书」：浅纸白底、雾蓝星图、金色节点与居中标题。整本封面和独立封面共用 `styles/book.typ` 中的 `book-cover`，默认设计为 `c`；修改标题、作者或封面样式后，重新执行 `uv run build.py pdf` 即可更新模板册。原「层序」封面及其图片 `assets/cover-art.png` 仍可通过 `cover-design=original` 使用。
 
 `cover.typ` 是单页封面的独立入口，可使用 Typst 编译（先创建输出目录）：
 
@@ -130,7 +130,16 @@ accent = "315C61"
 typst compile --root . cover.typ output/pdf/cover.pdf
 ```
 
-默认 A4 单栏正文、双栏目录、适合双面装订的内外边距、专题页眉和页码。封面不显示页码，目录使用罗马数字，正文从 1 重新编号。目录包含可点击的跳转和正文页码。长代码自动折行、跨页；不显示行号，短代码块尽量整块保留。
+保留四套矢量封面：A「几何序章」、B「曲线回响」、C「星图之书」、D「秩序蓝图」，默认使用亮色 C。编译四款封面合集，或临时指定其中一款用于整本模板册：
+
+```sh
+typst compile --root . cover-options.typ output/pdf/cover-options.pdf
+typst compile --root . --input cover-design=a templates.typ output/pdf/templates-a.pdf
+```
+
+`cover-design` 可取 `a`、`b`、`c`、`d` 或 `original`，也适用于单页入口 `cover.typ`。候选设计与原封面共用书名、作者配置，图案由矢量几何生成。
+
+默认 A4 单栏正文、双栏目录、适合双面装订的内外边距、专题页眉和页码。第 1 页为封面，第 2 页完全留白（无页眉、页脚与页码），第 3 页开始为目录。封面不显示页码，目录使用罗马数字，正文从 1 重新编号。目录包含可点击的跳转和正文页码。长代码自动折行、跨页；不显示行号，短代码块尽量整块保留。
 
 默认字体为 `Noto Sans SC`、`Microsoft YaHei` 和 `Maple Mono`。换电脑时请安装这些字体或修改 `layout.font` / `layout.code_font`；中文字体必须覆盖源文件使用的字符。Typst 自带的 `DejaVu Sans Mono` 可作为代码字体，但中文仍需额外字体。完整布局参数见 `templates.toml`，更细的设计调整在 `styles/book.typ`。
 

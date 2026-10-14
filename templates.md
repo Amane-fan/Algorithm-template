@@ -1223,66 +1223,6 @@ constexpr int mod = 998244353;
 using Z = MInt<mod>;
 ```
 
-<a id="module-e695b0e68daee7bb93e69e842f4d6f5f416c676f726974686d2e637070"></a>
-
-### Mo\_Algorithm
-
-```cpp
-const int B = max(1, int(n / sqrt(q)));
-vector<int> bel(n + 1);
-for (int i = 1; i <= n; i++) {
-    bel[i] = (i + B - 1) / B;
-}
-
-// 将询问离线
-vector<array<int, 3>> Q(q);
-for (int i = 0; i < q; i++) {
-    int l, r;
-    cin >> l >> r;
-    Q[i] = {l, r, i};
-}
-
-// 按左端点所在块的编号为第一关键字，右端点为第二关键字排序
-sort(all(Q), [&](const auto &a, const auto &b) {
-    if (bel[a[0]] != bel[b[0]]) {
-        return bel[a[0]] < bel[b[0]];
-    }
-    if (bel[a[0]] & 1) {
-        return a[1] < b[1];
-    } else {
-        return a[1] > b[1];
-    }
-});
-
-vector<int> cnt(n + 1);
-int cur = 0;
-
-auto add = [&](int k) -> void {
-    if (cnt[a[k]]++ == 0) {
-        cur++;
-    }
-};
-
-auto del = [&](int k) -> void {
-    if (--cnt[a[k]] == 0) {
-        cur--;
-    }
-};
-
-vector<int> ans(q);
-
-// x, y 代表询问区间；l, r 代表当前所在区间
-// 先扩展，再删除
-for (int i = 0, l = 1, r = 0; i < q; i++) {
-    auto [x, y, id] = Q[i];
-    while (l > x) add(--l); // 左扩展
-    while (r < y) add(++r); // 右扩展
-    while (l < x) del(l++); // 左删除
-    while (r > y) del(r--); // 右删除
-    ans[id] = cur;
-}
-```
-
 <a id="module-e695b0e68daee7bb93e69e842f4f44542e637070"></a>
 
 ### ODT
@@ -1789,6 +1729,66 @@ struct Treap {
 };
 ```
 
+<a id="module-e695b0e68daee7bb93e69e842fe88eabe9989f2e637070"></a>
+
+### 莫队
+
+```cpp
+const int B = max(1, int(n / sqrt(q)));
+vector<int> bel(n + 1);
+for (int i = 1; i <= n; i++) {
+    bel[i] = (i + B - 1) / B;
+}
+
+// 将询问离线
+vector<array<int, 3>> Q(q);
+for (int i = 0; i < q; i++) {
+    int l, r;
+    cin >> l >> r;
+    Q[i] = {l, r, i};
+}
+
+// 按左端点所在块的编号为第一关键字，右端点为第二关键字排序
+sort(all(Q), [&](const auto &a, const auto &b) {
+    if (bel[a[0]] != bel[b[0]]) {
+        return bel[a[0]] < bel[b[0]];
+    }
+    if (bel[a[0]] & 1) {
+        return a[1] < b[1];
+    } else {
+        return a[1] > b[1];
+    }
+});
+
+vector<int> cnt(n + 1);
+int cur = 0;
+
+auto add = [&](int k) -> void {
+    if (cnt[a[k]]++ == 0) {
+        cur++;
+    }
+};
+
+auto del = [&](int k) -> void {
+    if (--cnt[a[k]] == 0) {
+        cur--;
+    }
+};
+
+vector<int> ans(q);
+
+// x, y 代表询问区间；l, r 代表当前所在区间
+// 先扩展，再删除
+for (int i = 0, l = 1, r = 0; i < q; i++) {
+    auto [x, y, id] = Q[i];
+    while (l > x) add(--l); // 左扩展
+    while (r < y) add(++r); // 右扩展
+    while (l < x) del(l++); // 左删除
+    while (r > y) del(r--); // 右删除
+    ans[id] = cur;
+}
+```
+
 <a id="module-e59bbee8aeba"></a>
 
 ## 图论
@@ -1820,75 +1820,6 @@ vector<i64> dijkstra(const vector<vector<array<int, 2>>> &adj, int s) {
     }
     return dis;
 }
-```
-
-<a id="module-e59bbee8aeba2f6473755f6f6e5f747265652e637070"></a>
-
-### dsu\_on\_tree
-
-```cpp
-vector<int> siz(n + 1), dfn(n + 1), hvy(n + 1), rev(n + 1);
-int now = 1;
-auto dfs1 = [&](auto &&self, int u, int p) -> void {
-    siz[u] = 1;
-    dfn[u] = now;
-    rev[now] = u;
-    now++;
-    int mx = 0, hc = 0;
-    for (auto v : adj[u]) {
-        if (v == p) {
-            continue;
-        }
-        self(self, v, u);
-        siz[u] += siz[v];
-        if (siz[v] > mx) {
-            mx = siz[v];
-            hc = v;
-        }
-    }
-    hvy[u] = hc;
-};
-dfs1(dfs1, 1, 0);
-
-auto add = [&](int x) -> void {
-    
-};
-
-auto delSubTree = [&](int x) -> void {
-    
-};
-
-vector<i64> ans(n + 1);
-auto dfs2 = [&](auto &&self, int u, int p, bool keep) -> void {
-    for (auto v : adj[u]) {
-        if (v == p || v == hvy[u]) {
-            continue;
-        }
-        self(self, v, u, false);
-    }
-
-    if (hvy[u] != 0) {
-        self(self, hvy[u], u, true);
-    }
-
-    add(u);
-
-    for (auto v : adj[u]) {
-        if (v == p || v == hvy[u]) {
-            continue;
-        }
-        for (int i = dfn[v]; i < dfn[v] + siz[v]; i++) {
-            add(rev[i]);
-        }
-    }
-
-    // ans[u] = 
-
-    if (!keep) {
-        delSubTree(u);
-    }
-};
-dfs2(dfs2, 1, 0, true);
 ```
 
 <a id="module-e59bbee8aeba2f454243432e637070"></a>
@@ -1980,9 +1911,76 @@ struct EBCC {
 };
 ```
 
-<a id="module-e59bbee8aeba2f48696572686f6c7a657228e697a0e59091e59bbe292e637070"></a>
+<a id="module-e59bbee8aeba2f48696572686f6c7a6572284469726563746564292e637070"></a>
 
-### Hierholzer(无向图)
+### Hierholzer(Directed)
+
+```cpp
+array<vector<int>, 2> Hierholzer(const vector<vector<array<int, 2>>> &adj) {
+    int n = int(adj.size()) - 1;
+    if (n == 0) {
+        return {vector<int>(), vector<int>()};
+    }
+    vector<int> in(n + 1);
+    for (int u = 1; u <= n; u++) {
+        for (auto [v, e] : adj[u]) {
+            in[v]++;
+        }
+    }
+    int s = 1;
+    for (int u = 2; u <= n; u++) {
+        if (adj[s].size() == 0 && adj[u].size() != 0) {
+            s = u;
+        } else if (adj[s].size() != in[s] + 1 && adj[u].size() == in[u] + 1) {
+            s = u;
+        }
+    }
+    vector<int> path, edge;
+    vector<int> idx(n + 1);
+    auto dfs = [&](auto &&self, int u, int e) -> void {
+        while (idx[u] < adj[u].size()) {
+            auto [v, ne] = adj[u][idx[u]];
+            idx[u]++;
+            self(self, v, ne);
+        }
+        path.push_back(u);
+        edge.push_back(e);
+    };
+    dfs(dfs, s, -1);
+
+    edge.pop_back();
+    reverse(edge.begin(), edge.end());
+    reverse(path.begin(), path.end());
+    return {path, edge};
+}
+
+bool check(const vector<vector<array<int, 2>>> &adj, const vector<int> &path) {
+    int n = int(adj.size()) - 1;
+    int m = 0;
+    vector<map<int, int>> num(n + 1);
+    for (int u = 1; u <= n; u++) {
+        for (auto [v, e] : adj[u]) {
+            num[u][v]++;
+            m++;
+        }
+    }
+    int ps = path.size();
+    for (int i = 0; i + 1 < ps; i++) {
+        int u = path[i];
+        int v = path[i + 1];
+        if (u < 1 || u > n || v < 1 || v > n || num[u][v] == 0) {
+            return false;
+        }
+        num[u][v]--;
+        m--;
+    }
+    return m == 0;
+}
+```
+
+<a id="module-e59bbee8aeba2f48696572686f6c7a657228556e4469726563746564292e637070"></a>
+
+### Hierholzer(UnDirected)
 
 ```cpp
 array<vector<int>, 2> Hierholzer(const vector<vector<array<int, 2>>> &g) {
@@ -2065,73 +2063,6 @@ bool check(const vector<vector<array<int, 2>>> &g, const vector<int> &path) {
         m -= 1;
     }
 
-    return m == 0;
-}
-```
-
-<a id="module-e59bbee8aeba2f48696572686f6c7a657228e69c89e59091e59bbe292e637070"></a>
-
-### Hierholzer(有向图)
-
-```cpp
-array<vector<int>, 2> Hierholzer(const vector<vector<array<int, 2>>> &adj) {
-    int n = int(adj.size()) - 1;
-    if (n == 0) {
-        return {vector<int>(), vector<int>()};
-    }
-    vector<int> in(n + 1);
-    for (int u = 1; u <= n; u++) {
-        for (auto [v, e] : adj[u]) {
-            in[v]++;
-        }
-    }
-    int s = 1;
-    for (int u = 2; u <= n; u++) {
-        if (adj[s].size() == 0 && adj[u].size() != 0) {
-            s = u;
-        } else if (adj[s].size() != in[s] + 1 && adj[u].size() == in[u] + 1) {
-            s = u;
-        }
-    }
-    vector<int> path, edge;
-    vector<int> idx(n + 1);
-    auto dfs = [&](auto &&self, int u, int e) -> void {
-        while (idx[u] < adj[u].size()) {
-            auto [v, ne] = adj[u][idx[u]];
-            idx[u]++;
-            self(self, v, ne);
-        }
-        path.push_back(u);
-        edge.push_back(e);
-    };
-    dfs(dfs, s, -1);
-
-    edge.pop_back();
-    reverse(edge.begin(), edge.end());
-    reverse(path.begin(), path.end());
-    return {path, edge};
-}
-
-bool check(const vector<vector<array<int, 2>>> &adj, const vector<int> &path) {
-    int n = int(adj.size()) - 1;
-    int m = 0;
-    vector<map<int, int>> num(n + 1);
-    for (int u = 1; u <= n; u++) {
-        for (auto [v, e] : adj[u]) {
-            num[u][v]++;
-            m++;
-        }
-    }
-    int ps = path.size();
-    for (int i = 0; i + 1 < ps; i++) {
-        int u = path[i];
-        int v = path[i + 1];
-        if (u < 1 || u > n || v < 1 || v > n || num[u][v] == 0) {
-            return false;
-        }
-        num[u][v]--;
-        m--;
-    }
     return m == 0;
 }
 ```
@@ -2520,6 +2451,75 @@ for (int i = 1; i <= n; i++) {
 }
 
 cout << ans << '\n';
+```
+
+<a id="module-e59bbee8aeba2fe6a091e4b88ae590afe58f91e5bc8fe59088e5b9b62e637070"></a>
+
+### 树上启发式合并
+
+```cpp
+vector<int> siz(n + 1), dfn(n + 1), hvy(n + 1), rev(n + 1);
+int now = 1;
+auto dfs1 = [&](auto &&self, int u, int p) -> void {
+    siz[u] = 1;
+    dfn[u] = now;
+    rev[now] = u;
+    now++;
+    int mx = 0, hc = 0;
+    for (auto v : adj[u]) {
+        if (v == p) {
+            continue;
+        }
+        self(self, v, u);
+        siz[u] += siz[v];
+        if (siz[v] > mx) {
+            mx = siz[v];
+            hc = v;
+        }
+    }
+    hvy[u] = hc;
+};
+dfs1(dfs1, 1, 0);
+
+auto add = [&](int x) -> void {
+    
+};
+
+auto delSubTree = [&](int x) -> void {
+    
+};
+
+vector<i64> ans(n + 1);
+auto dfs2 = [&](auto &&self, int u, int p, bool keep) -> void {
+    for (auto v : adj[u]) {
+        if (v == p || v == hvy[u]) {
+            continue;
+        }
+        self(self, v, u, false);
+    }
+
+    if (hvy[u] != 0) {
+        self(self, hvy[u], u, true);
+    }
+
+    add(u);
+
+    for (auto v : adj[u]) {
+        if (v == p || v == hvy[u]) {
+            continue;
+        }
+        for (int i = dfn[v]; i < dfn[v] + siz[v]; i++) {
+            add(rev[i]);
+        }
+    }
+
+    // ans[u] = 
+
+    if (!keep) {
+        delSubTree(u);
+    }
+};
+dfs2(dfs2, 1, 0, true);
 ```
 
 <a id="module-e59bbee8aeba2fe6a091e79a84e9878de5bf832e637070"></a>
@@ -4399,12 +4399,12 @@ auto insert = [&](const string &s) -> void {
 };
 ```
 
-<a id="module-e5ad97e7aca6e4b8b22f7a5f616c676f726974686d2e637070"></a>
+<a id="module-e5ad97e7aca6e4b8b22f7a416c676f726974686d2e637070"></a>
 
-### z\_algorithm
+### zAlgorithm
 
 ```cpp
-vector<int> z_algorithm(const string &s) {
+vector<int> zAlgorithm(const string &s) {
     int n = s.size();
     vector<int> z(n);
     int l = 0, r = 0;
@@ -4476,9 +4476,9 @@ struct Hash {
 };
 ```
 
-<a id="module-e585b6e4bb962f693132382e637070"></a>
+<a id="module-e585b6e4bb962f696e743132382e637070"></a>
 
-### i128
+### int128
 
 ```cpp
 using i128 = __int128;

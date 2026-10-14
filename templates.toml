@@ -12,7 +12,8 @@ subtitle = "Algorithms & Data Structures"
 author = "Amane"
 
 [cover]
-# 相对于配置文件的位置，支持 PNG / JPEG / SVG；留空使用简洁文字封面。
+# 默认使用亮色 C「星图之书」。此图片仅在 cover-design=original 时使用。
+# 路径相对于配置文件，支持 PNG / JPEG / SVG；留空时原版使用文字封面。
 image = "assets/cover-art.png"
 
 [layout]
