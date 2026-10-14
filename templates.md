@@ -298,6 +298,352 @@ struct DSU {
 };
 ```
 
+<a id="module-e695b0e68daee7bb93e69e842f44796e616d69634269747365742e637070"></a>
+
+### DynamicBitset
+
+```cpp
+// GNU C++17，依赖 vector、algorithm、cassert、ostream；using u64 = unsigned long long;
+// 长度 n >= 0，下标 [0, n)，[] 只读，写入用 set(i, v)。
+// 位运算要求长度相同，移位 k >= 0；resize 保留原有位，新增位填 v。
+// 单点操作 O(1)，整体操作 O(ceil(n / 64))。
+// DynamicBitset f(n); f.set(0); f |= f << k; // 01 背包（和 < n）
+// 枚举 1：for (int i = f.find_first(); i < f.size(); i = f.find_next(i))
+struct DynamicBitset {
+    int n;
+    vector<u64> a;
+
+    explicit DynamicBitset(int n = 0, bool v = false)
+        : n(n), a(n / 64 + (n % 64 != 0), v ? ~u64(0) : 0) {
+        trim();
+    }
+    // 保证末块超出 n 的位为 0。
+    void trim() {
+        if (n % 64) {
+            a.back() &= (u64(1) << (n % 64)) - 1;
+        }
+    }
+    int size() const { return n; }
+    void resize(int m, bool v = false) {
+        a.resize(m / 64 + (m % 64 != 0), v ? ~u64(0) : 0);
+        if (v && m > n && n % 64) {
+            a[n / 64] |= ~u64(0) << (n % 64);
+        }
+        n = m;
+        trim();
+    }
+    bool operator[](int i) const {
+        return a[i / 64] >> (i % 64) & 1;
+    }
+    DynamicBitset &set(int i, bool v = true) {
+        u64 mask = u64(1) << (i % 64);
+        if (v) {
+            a[i / 64] |= mask;
+        } else {
+            a[i / 64] &= ~mask;
+        }
+        return *this;
+    }
+    DynamicBitset &reset(int i) { return set(i, false); }
+    DynamicBitset &flip(int i) {
+        a[i / 64] ^= u64(1) << (i % 64);
+        return *this;
+    }
+    DynamicBitset &set() {
+        fill(a.begin(), a.end(), ~u64(0));
+        trim();
+        return *this;
+    }
+    DynamicBitset &reset() {
+        fill(a.begin(), a.end(), 0);
+        return *this;
+    }
+    DynamicBitset &flip() {
+        for (auto &x : a) {
+            x = ~x;
+        }
+        trim();
+        return *this;
+    }
+    int count() const {
+        int ans = 0;
+        for (auto x : a) {
+            ans += __builtin_popcountll(x);
+        }
+        return ans;
+    }
+    bool any() const {
+        for (auto x : a) {
+            if (x) {
+                return true;
+            }
+        }
+        return false;
+    }
+    bool none() const { return !any(); }
+    bool all() const { return count() == n; }
+
+    // 严格大于 i 的下一个 1，不存在返回 n；find_next(-1) 找第一个 1。
+    int find_next(int i) const {
+        if (i >= n - 1) {
+            return n;
+        }
+        i++;
+        int j = i / 64;
+        u64 x = a[j] & (~u64(0) << (i % 64));
+        while (true) {
+            if (x) {
+                return j * 64 + __builtin_ctzll(x);
+            }
+            if (++j == int(a.size())) {
+                return n;
+            }
+            x = a[j];
+        }
+    }
+    int find_first() const { return find_next(-1); }
+
+    DynamicBitset &operator&=(const DynamicBitset &b) {
+        assert(n == b.n);
+        for (int i = 0; i < int(a.size()); i++) {
+            a[i] &= b.a[i];
+        }
+        return *this;
+    }
+    DynamicBitset &operator|=(const DynamicBitset &b) {
+        assert(n == b.n);
+        for (int i = 0; i < int(a.size()); i++) {
+            a[i] |= b.a[i];
+        }
+        return *this;
+    }
+    DynamicBitset &operator^=(const DynamicBitset &b) {
+        assert(n == b.n);
+        for (int i = 0; i < int(a.size()); i++) {
+            a[i] ^= b.a[i];
+        }
+        return *this;
+    }
+    DynamicBitset &operator<<=(int k) {
+        if (k >= n) {
+            return reset();
+        }
+        int d = k / 64, s = k % 64;
+        // 从高到低更新，避免覆盖尚未读取的块。
+        for (int i = int(a.size()) - 1; i >= 0; i--) {
+            u64 x = i >= d ? a[i - d] << s : 0;
+            if (s && i > d) {
+                x |= a[i - d - 1] >> (64 - s);
+            }
+            a[i] = x;
+        }
+        trim();
+        return *this;
+    }
+    DynamicBitset &operator>>=(int k) {
+        if (k >= n) {
+            return reset();
+        }
+        int d = k / 64, s = k % 64, m = a.size();
+        for (int i = 0; i < m; i++) {
+            u64 x = i + d < m ? a[i + d] >> s : 0;
+            if (s && i + d + 1 < m) {
+                x |= a[i + d + 1] << (64 - s);
+            }
+            a[i] = x;
+        }
+        return *this;
+    }
+    friend DynamicBitset operator&(DynamicBitset a, const DynamicBitset &b) {
+        a &= b;
+        return a;
+    }
+    friend DynamicBitset operator|(DynamicBitset a, const DynamicBitset &b) {
+        a |= b;
+        return a;
+    }
+    friend DynamicBitset operator^(DynamicBitset a, const DynamicBitset &b) {
+        a ^= b;
+        return a;
+    }
+    friend DynamicBitset operator<<(DynamicBitset a, int k) {
+        a <<= k;
+        return a;
+    }
+    friend DynamicBitset operator>>(DynamicBitset a, int k) {
+        a >>= k;
+        return a;
+    }
+    friend DynamicBitset operator~(DynamicBitset a) {
+        a.flip();
+        return a;
+    }
+    friend bool operator==(const DynamicBitset &a, const DynamicBitset &b) {
+        return a.n == b.n && a.a == b.a;
+    }
+    friend bool operator!=(const DynamicBitset &a, const DynamicBitset &b) {
+        return !(a == b);
+    }
+    // cout << a：从高位到低位输出，保留前导 0，不附加换行。
+    friend ostream &operator<<(ostream &os, const DynamicBitset &a) {
+        for (int i = a.n - 1; i >= 0; i--) {
+            os.put(a[i] ? '1' : '0');
+        }
+        return os;
+    }
+};
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f466173745365742e637070"></a>
+
+### FastSet
+
+```cpp
+// 值域 [0, n]，0 <= n < INT_MAX，初始为空；重复插入、删除不存在的元素均无影响。
+// contains O(1)，插入、删除、前驱后继 O(log_64(n))，空间 O(n) 位。
+struct FastSet {
+    int n;
+    vector<vector<u64>> a;
+
+    FastSet(int N = 0) {
+        init(N);
+    }
+    void init(int N) {
+        assert(0 <= N && N < INT_MAX);
+        n = N;
+        N++;
+        a.clear();
+        do {
+            N = N / 64 + (N % 64 != 0);
+            a.push_back(vector<u64>(N));
+        } while (N > 1);
+    }
+    bool contains(int x) const {
+        return 0 <= x && x <= n && (a[0][x / 64] >> (x % 64) & 1);
+    }
+    void insert(int x) {
+        assert(0 <= x && x <= n);
+        for (auto &v : a) {
+            v[x / 64] |= u64(1) << (x % 64);
+            x /= 64;
+        }
+    }
+    void erase(int x) {
+        assert(0 <= x && x <= n);
+        for (auto &v : a) {
+            v[x / 64] &= ~(u64(1) << (x % 64));
+            if (v[x / 64]) {
+                break;
+            }
+            x /= 64;
+        }
+    }
+    // 最小的 >= x 的元素，不存在返回 n + 1。
+    int next(int x) const {
+        x = max(x, 0);
+        if (x > n) {
+            return n + 1;
+        }
+        for (int h = 0; h < int(a.size()); h++) {
+            if (x / 64 >= int(a[h].size())) {
+                break;
+            }
+            u64 v = a[h][x / 64] >> (x % 64);
+            if (!v) {
+                x = x / 64 + 1;
+                continue;
+            }
+            x += __builtin_ctzll(v);
+            for (int i = h - 1; i >= 0; i--) {
+                x *= 64;
+                x += __builtin_ctzll(a[i][x / 64]);
+            }
+            return x;
+        }
+        return n + 1;
+    }
+    // 最大的 <= x 的元素，不存在返回 -1。
+    int prev(int x) const {
+        x = min(x, n);
+        for (int h = 0; h < int(a.size()); h++) {
+            if (x < 0) {
+                break;
+            }
+            u64 v = a[h][x / 64] << (63 - x % 64);
+            if (!v) {
+                x = x / 64 - 1;
+                continue;
+            }
+            x -= __builtin_clzll(v);
+            for (int i = h - 1; i >= 0; i--) {
+                x = x * 64 + 63;
+                x -= __builtin_clzll(a[i][x / 64]);
+            }
+            return x;
+        }
+        return -1;
+    }
+};
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f46656e7769636b32442e637070"></a>
+
+### Fenwick2D
+
+```cpp
+// 单点加 / 单点赋值 / 矩形和，适合坐标范围较小的二维网格。
+// 下标 [1, n] × [1, m]，矩形为闭区间；初始全 0。
+// 单次操作 O(log n * log m)，空间 O(nm)；大坐标稀疏点集不宜直接使用。
+// T{} 为加法零元，支持 +、-；整数求和通常使用 i64。
+template <class T>
+struct Fenwick2D {
+    int n, m;
+    vector<vector<T>> a;
+
+    Fenwick2D(int n = 0, int m = 0) { init(n, m); }
+    void init(int N, int M) {
+        n = N;
+        m = M;
+        a.assign(n + 1, vector<T>(m + 1));
+    }
+    // (x, y) 加 v，要求 1 <= x <= n，1 <= y <= m。
+    void add(int x, int y, const T &v) {
+        for (int i = x; i <= n; i += (i & -i)) {
+            for (int j = y; j <= m; j += (j & -j)) {
+                a[i][j] = a[i][j] + v;
+            }
+        }
+    }
+    void set(int x, int y, const T &v) {
+        add(x, y, v - sum(x, y, x, y));
+    }
+    // [1, x] × [1, y] 的和，允许 x = 0 或 y = 0，返回 0。
+    T sum(int x, int y) const {
+        T ans{};
+        for (int i = x; i > 0; i -= (i & -i)) {
+            for (int j = y; j > 0; j -= (j & -j)) {
+                ans = ans + a[i][j];
+            }
+        }
+        return ans;
+    }
+    // [x1, x2] × [y1, y2] 的和，空矩形返回 0。
+    T sum(int x1, int y1, int x2, int y2) const {
+        if (x1 > x2 || y1 > y2) {
+            return T{};
+        }
+        return sum(x2, y2) - sum(x1 - 1, y2)
+             - sum(x2, y1 - 1) + sum(x1 - 1, y1 - 1);
+    }
+};
+
+// Fenwick2D<i64> tr(n, m);
+// tr.add(2, 3, 5);          // (2, 3) 加 5。
+// tr.set(2, 3, 7);          // (2, 3) 赋值为 7。
+// cout << tr.sum(2, 3);     // 左上角 [1, 2] × [1, 3] 的和，为 7。
+// cout << tr.sum(2, 2, 3, 4); // 行 [2, 3]、列 [2, 4] 的和，为 7。
+```
+
 <a id="module-e695b0e68daee7bb93e69e842f46656e7769636b2e637070"></a>
 
 ### Fenwick
@@ -826,6 +1172,57 @@ struct LinearBasis {
 };
 ```
 
+<a id="module-e695b0e68daee7bb93e69e842f4d496e742853686f72742056657273696f6e292e637070"></a>
+
+### MInt(Short Version)
+
+```cpp
+// 需 i64 = long long；1 < P <= INT_MAX，不要直接修改 x。
+// 求逆 / 除法要求 P 为质数且除数非零；power 的指数必须非负。
+// 加减乘 O(1)，求逆 / 除法 O(log P)，快速幂 O(log b)。
+template <class T>
+T power(T a, i64 b) {
+    assert(b >= 0);
+    T res = 1;
+    for (; b; b >>= 1, a *= a) {
+        if (b & 1) {
+            res *= a;
+        }
+    }
+    return res;
+}
+
+template <int P>
+struct MInt {
+    static_assert(P > 1);
+    i64 x;
+    MInt(i64 v = 0) : x(v % P) {
+        if (x < 0) {
+            x += P;
+        }
+    }
+    MInt inv() const {
+        assert(x != 0);
+        return power(*this, P - 2);
+    }
+    MInt operator-() const { return -x; }
+    friend MInt operator+(MInt a, MInt b) { return a.x + b.x; }
+    friend MInt operator-(MInt a, MInt b) { return a.x - b.x; }
+    friend MInt operator*(MInt a, MInt b) { return a.x * b.x; }
+    friend MInt operator/(MInt a, MInt b) { return a * b.inv(); }
+    MInt &operator+=(MInt a) { return *this = *this + a; }
+    MInt &operator-=(MInt a) { return *this = *this - a; }
+    MInt &operator*=(MInt a) { return *this = *this * a; }
+    MInt &operator/=(MInt a) { return *this = *this / a; }
+    friend bool operator==(MInt a, MInt b) { return a.x == b.x; }
+    friend bool operator!=(MInt a, MInt b) { return a.x != b.x; }
+    friend ostream &operator<<(ostream &os, MInt a) { return os << a.x; }
+};
+
+constexpr int mod = 998244353;
+using Z = MInt<mod>;
+```
+
 <a id="module-e695b0e68daee7bb93e69e842f4d6f5f416c676f726974686d2e637070"></a>
 
 ### Mo\_Algorithm
@@ -884,6 +1281,113 @@ for (int i = 0, l = 1, r = 0; i < q; i++) {
     while (r > y) del(r--); // 右删除
     ans[id] = cur;
 }
+```
+
+<a id="module-e695b0e68daee7bb93e69e842f4f44542e637070"></a>
+
+### ODT
+
+```cpp
+// 珂朵莉树：用 set 保存若干连续等值段，按段暴力操作。
+// 适用：等值段较少，或有频繁的大区间赋值、数据随机的区间操作题。
+// 若每次遍历后都赋值并删除这些段，可按段的增删次数作均摊分析。
+// 区间加、独立查询不会减少段数；一般情形无对数保证，构造数据可卡。
+// S 为当前段数，K 为区间内段数：assign/add/sum 为 O(log S + K)，
+// kth 为 O(log S + K log K)；最坏 K = n，空间 O(n)。
+// GNU C++17，依赖常用 STL 和 using i64 = long long;
+// 下标 [1, n]，操作为闭区间，要求 1 <= l <= r <= n，n < INT_MAX。
+// 值及区间和须在 i64 范围内；查询也会分裂区间，不自动合并相邻等值段。
+struct ODT {
+    struct Node {
+        int l, r;
+        mutable i64 v; // set 只按 l 排序，允许直接修改 v。
+        bool operator<(const Node &b) const { return l < b.l; }
+    };
+    int n;
+    set<Node> s;
+
+    ODT(int n = 0, i64 v = 0) { init(n, v); }
+    ODT(const vector<i64> &a) { init(a); }
+    void init(int N, i64 v = 0) {
+        n = N;
+        s.clear();
+        if (n) {
+            s.insert({1, n, v});
+        }
+    }
+    // a[0] 不使用，初始化时合并相邻等值元素。
+    void init(const vector<i64> &a) {
+        n = int(a.size()) - 1;
+        s.clear();
+        for (int l = 1, r; l <= n; l = r + 1) {
+            r = l;
+            while (r < n && a[r + 1] == a[l]) {
+                r++;
+            }
+            s.insert(s.end(), {l, r, a[l]});
+        }
+    }
+    // 返回以 x 为左端点的段；split(n + 1) 返回 end()。
+    set<Node>::iterator split(int x) {
+        if (x == n + 1) {
+            return s.end();
+        }
+        auto it = s.lower_bound({x, 0, 0});
+        if (it != s.end() && it->l == x) {
+            return it;
+        }
+        auto [l, r, v] = *prev(it);
+        s.erase(prev(it));
+        s.insert({l, x - 1, v});
+        return s.insert({x, r, v}).first;
+    }
+    // 必须先 split(r + 1)，再 split(l)，否则左迭代器可能失效。
+    void assign(int l, int r, i64 v) {
+        auto itr = split(r + 1), itl = split(l);
+        s.erase(itl, itr);
+        s.insert({l, r, v});
+    }
+    void add(int l, int r, i64 v) {
+        auto itr = split(r + 1), itl = split(l);
+        for (auto it = itl; it != itr; it++) {
+            it->v += v;
+        }
+    }
+    i64 sum(int l, int r) {
+        auto itr = split(r + 1), itl = split(l);
+        i64 ans = 0;
+        for (auto it = itl; it != itr; it++) {
+            ans += (it->r - it->l + 1) * it->v;
+        }
+        return ans;
+    }
+    // 按元素个数计重，第 k 小，要求 1 <= k <= r - l + 1。
+    i64 kth(int l, int r, int k) {
+        assert(1 <= k && k <= r - l + 1);
+        auto itr = split(r + 1), itl = split(l);
+        vector<pair<i64, int>> a;
+        for (auto it = itl; it != itr; it++) {
+            a.push_back({it->v, it->r - it->l + 1});
+        }
+        sort(a.begin(), a.end());
+        for (auto [v, cnt] : a) {
+            if (k <= cnt) {
+                return v;
+            }
+            k -= cnt;
+        }
+        return 0;
+    }
+};
+
+// ODT tr(n);                  // 初始全 0；ODT tr(n, v) 初始全 v。
+// vector<i64> a = {0, 3, 1, 1, 5};
+// ODT tr(a);                  // a[1..4]，a[0] 不用。
+// tr.assign(2, 3, 4);         // [3, 4, 4, 5]
+// tr.add(1, 2, -1);           // [2, 3, 4, 5]
+// cout << tr.sum(1, 4);       // 14
+// cout << tr.kth(1, 4, 2);    // 3
+// 自定义统计：先分裂，再遍历 [itl, itr)，每段贡献由 v 和 r-l+1 计算。
 ```
 
 <a id="module-e695b0e68daee7bb93e69e842f524d5132442e637070"></a>
@@ -1885,32 +2389,39 @@ struct SCC {
 ### SPFA
 
 ```cpp
-constexpr i64 inf = 1e18;
-vector<i64> spfa(const vector<vector<array<int, 2>>> &adj, int s) {
-    int n = adj.size() - 1;
+// 点编号 [1, n]，有向边 adj[u].push_back({w, v})，最坏 O(nm)。
+// s > 0：单源最短路，不可达为 inf；s = 0：所有点作源，检查全图负环。
+// 有源点可达的负环返回空 vector；全图判负环用 spfa(adj).empty()。
+constexpr i64 inf = numeric_limits<i64>::max() / 3;
+vector<i64> spfa(const vector<vector<array<int, 2>>> &adj, int s = 0) {
+    int n = int(adj.size()) - 1;
     vector<i64> dis(n + 1, inf);
     vector<int> cnt(n + 1);
-    vector<bool> vis(n + 1);
-    dis[s] = 0;
-    vis[s] = true;
+    vector<bool> inq(n + 1);
     queue<int> q;
-    q.push(s);
+    for (int i = 1; i <= n; i++) {
+        if (s == 0 || i == s) {
+            dis[i] = 0;
+            inq[i] = true;
+            q.push(i);
+        }
+    }
     while (!q.empty()) {
         int u = q.front();
         q.pop();
-        vis[u] = false;
+        inq[u] = false;
         for (auto [w, v] : adj[u]) {
-            if (dis[v] > dis[u] + w) {
-                dis[v] = dis[u] + w;
-                cnt[v] = cnt[u] + 1;
-                // 判断负环，要写>=点的个数，如果0位置也有点要写>=n+1
-                if (cnt[v] >= n) {
-                    return {};
-                }
-                if (!vis[v]) {
-                    q.push(v);
-                    vis[v] = true;
-                }
+            if (dis[v] <= dis[u] + w) {
+                continue;
+            }
+            dis[v] = dis[u] + w;
+            cnt[v] = cnt[u] + 1; // 当前松弛路径的边数，不是入队次数。
+            if (cnt[v] >= n) {
+                return {};
+            }
+            if (!inq[v]) {
+                inq[v] = true;
+                q.push(v);
             }
         }
     }
@@ -2119,6 +2630,99 @@ struct Comb {
         return fac(a) * infac(a - b) % mod * infac(b) % mod;
     }
 } comb;
+```
+
+<a id="module-e695b0e5ada62f44657465726d696e616e742e637070"></a>
+
+### Determinant
+
+```cpp
+// 方阵下标 [1, n]，第 0 行/列不使用；按值传入，不修改原矩阵。
+// 浮点版求实数行列式；模质数版常用于矩阵树定理、计数问题。
+// 约定 0 阶行列式为 1，此时传入 vector(1, vector<T>(1))。
+using F = long double;
+
+// 列主元高斯消元，O(n^3) 时间，O(n^2) 空间。
+// eps 用于判定主元为 0，需按数据尺度调整；不适合求大整数精确值。
+F det(vector<vector<F>> a, F eps = 1e-12L) {
+    int n = int(a.size()) - 1;
+    F ans = 1;
+    for (int i = 1; i <= n; i++) {
+        int p = i;
+        for (int j = i + 1; j <= n; j++) {
+            if (fabs(a[j][i]) > fabs(a[p][i])) {
+                p = j;
+            }
+        }
+        if (fabs(a[p][i]) <= eps) {
+            return 0;
+        }
+        if (p != i) {
+            swap(a[p], a[i]);
+            ans = -ans; // 交换两行，行列式变号。
+        }
+        ans *= a[i][i];
+        for (int j = i + 1; j <= n; j++) {
+            F t = a[j][i] / a[i][i];
+            a[j][i] = 0;
+            for (int k = i + 1; k <= n; k++) {
+                a[j][k] -= t * a[i][k];
+            }
+        }
+    }
+    return ans;
+}
+
+// 模质数行列式，返回 [0, mod)；要求 mod 为质数且 2 <= mod <= INT_MAX。
+// 依赖 using i64 = long long；乘法用 i64，输入可为负数。
+// 时间 O(n^3 + n log mod)，空间 O(n^2)；合数模数不能使用此版本。
+i64 detMod(vector<vector<i64>> a, int mod) {
+    int n = int(a.size()) - 1;
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            a[i][j] = (a[i][j] % mod + mod) % mod;
+        }
+    }
+    // 模快速幂，用费马小定理求非零主元的逆元。
+    auto power = [&](i64 x, int k) {
+        i64 res = 1;
+        for (; k; k >>= 1, x = x * x % mod) {
+            if (k & 1) {
+                res = res * x % mod;
+            }
+        }
+        return res;
+    };
+    i64 ans = 1;
+    for (int i = 1; i <= n; i++) {
+        int p = i;
+        while (p <= n && a[p][i] == 0) {
+            p++;
+        }
+        if (p > n) {
+            return 0;
+        }
+        if (p != i) {
+            swap(a[p], a[i]);
+            ans = (mod - ans) % mod;
+        }
+        ans = ans * a[i][i] % mod;
+        i64 inv = power(a[i][i], mod - 2);
+        for (int j = i + 1; j <= n; j++) {
+            i64 t = a[j][i] * inv % mod;
+            a[j][i] = 0;
+            for (int k = i + 1; k <= n; k++) {
+                a[j][k] = (a[j][k] - t * a[i][k] % mod + mod) % mod;
+            }
+        }
+    }
+    return ans;
+}
+
+// vector<vector<F>> a = {{0, 0, 0}, {0, 1, 2}, {0, 3, 4}};
+// cout << det(a); // -2
+// vector<vector<i64>> b = {{0, 0, 0}, {0, 1, 2}, {0, 3, 4}};
+// cout << detMod(b, 998244353); // 998244351
 ```
 
 <a id="module-e695b0e5ada62f6469766964652e637070"></a>
@@ -2364,35 +2968,65 @@ struct FastGCD {
 ### gauss
 
 ```cpp
-bool gauss(vector<vector<int>> &a) {
-    int n = (int)a.size() - 1;
-    for (int i = 1; i <= n; i++) {
-        int r = i;
-        for (int k = i; k <= n; k++) {
-            if (fabs(a[k][i]) > eps) {
-                r = k;
-                break;
-            }
-        }
-        if (r != i) swap(a[i], a[r]);
-        if (fabs(a[i][i]) < eps) return false;
+// 解 n 个方程、m 个未知数的实数线性方程组，允许 n != m。
+// 增广矩阵 a[n+1][m+2]：a[i][1..m] 为系数，a[i][m+1] 为常数。
+// 第 0 行/列不使用，但第 0 行也要分配 m+2 个元素以确定未知数个数。
+// 按值传入，不修改原矩阵；返回 -1 无解、0 无穷多解、1 唯一解。
+// 有解时 ans[1..m] 为一组解（自由变量取 0）；无解时 ans 清空。
+// 时间 O(n*m*min(n,m) + m^2)，空间 O(nm + m)。
+using F = long double;
 
-        for (int j = n + 1; j >= i; j--) {
-            a[i][j] /= a[i][i];
-        }
-        for (int k = i + 1; k <= n; k++) {
-            for (int j = n + 1; j >= i; j--) {
-                a[k][j] -= a[i][j] * a[k][i];
+// 列主元消元 + 回代；eps 为绝对判零阈值，需按数据尺度调整。
+int gauss(vector<vector<F>> a, vector<F> &ans, F eps = 1e-12L) {
+    int n = int(a.size()) - 1, m = int(a[0].size()) - 2;
+    vector<int> pos(m + 1); // pos[j]：第 j 个未知数对应的主元行，0 表示自由变量。
+    int row = 1;
+    for (int col = 1; col <= m && row <= n; col++) {
+        int p = row;
+        for (int i = row + 1; i <= n; i++) {
+            if (fabs(a[i][col]) > fabs(a[p][col])) {
+                p = i;
             }
         }
+        if (fabs(a[p][col]) <= eps) {
+            continue;
+        }
+        swap(a[p], a[row]);
+        pos[col] = row;
+        for (int i = row + 1; i <= n; i++) {
+            F t = a[i][col] / a[row][col];
+            a[i][col] = 0;
+            for (int j = col + 1; j <= m + 1; j++) {
+                a[i][j] -= t * a[row][j];
+            }
+        }
+        row++;
     }
-    for (int i = n - 1; i >= 1; i--) {
-        for (int j = i + 1; j <= n; j++) {
-            a[i][n + 1] -= a[i][j] * a[j][n + 1];
+    for (int i = row; i <= n; i++) {
+        if (fabs(a[i][m + 1]) > eps) { // 0 = 非零常数。
+            ans.clear();
+            return -1;
         }
     }
-    return true;
+    ans.assign(m + 1, 0);
+    for (int j = m; j >= 1; j--) {
+        if (pos[j] == 0) {
+            continue;
+        }
+        int i = pos[j];
+        F v = a[i][m + 1];
+        for (int k = j + 1; k <= m; k++) {
+            v -= a[i][k] * ans[k];
+        }
+        ans[j] = v / a[i][j];
+    }
+    return row - 1 == m ? 1 : 0;
 }
+
+// vector<vector<F>> a(n + 1, vector<F>(m + 2));
+// 读入每行 a[i][1..m+1] 后：vector<F> ans; int res = gauss(a, ans);
+// res == -1 时无解；否则可使用 ans[1..m]，res == 0 表示还有其他解。
+// 示例：2x+y=5，x-y=1，得到 ans[1]=2，ans[2]=1。
 ```
 
 <a id="module-e695b0e5ada62f47656f6d657472792e637070"></a>
@@ -2400,204 +3034,297 @@ bool gauss(vector<vector<int>> &a) {
 ### Geometry
 
 ```cpp
+// GNU C++17；整数坐标用 Point<i64>，浮点坐标用 Point<F>。
+// 点积 / 叉积 / 面积和等均使用 T，须保证所有中间结果在 T 的范围内。
+// 需要更大整数范围时使用 Point<i128>；整数坐标的除法仍是整数除法。
+// 浮点判定用绝对 eps，需按题目尺度调整；排序、去重使用精确比较。
 using F = long double;
-constexpr F eps = 1e-8;
+constexpr F eps = 1e-8L;
 const F pi = acos(-1.L);
-
+// 符号：返回 -1/0/1；整数精确判定，浮点 |x| < eps 视为 0。
 template <class T>
 int sgn(T x) {
-    if (fabs(x) < eps) {
-        return 0;
+    if constexpr (is_floating_point_v<T>) {
+        if (fabs(x) < eps) {
+            return 0;
+        }
     }
-    return x < 0 ? -1 : 1;
+    return (x > 0) - (x < 0);
 }
 
 template <class T>
 struct Point {
     T x, y;
-    Point(const T &x_ = 0, const T &y_ = 0) : x(x_), y(y_) {}
-    Point operator+(const Point &p) const {
-        return {x + p.x, y + p.y};
+    Point(const T &x = 0, const T &y = 0) : x(x), y(y) {}
+    Point operator+(const Point &p) const { return {x + p.x, y + p.y}; }
+    Point operator-(const Point &p) const { return {x - p.x, y - p.y}; }
+    Point operator*(const T &v) const { return {x * v, y * v}; }
+    Point operator/(const T &v) const { return {x / v, y / v}; }
+    bool operator<(const Point &p) const {
+        return x == p.x ? y < p.y : x < p.x;
     }
-    Point operator-(const Point &p) const {
-        return {x - p.x, y - p.y};
-    }
-    Point operator*(const T &v) const {
-        return {x * v, y * v};
-    }
-    Point operator/(const T &v) const {
-        return {x / v, y / v};
-    }
-    bool operator<(const Point<T> &o) const {
-        if (sgn(x - o.x) == 0) {
-            return y < o.y;
-        }
-        return x < o.x;
-    }
-    bool operator==(const Point<T> &o) const {
-        return sgn(x - o.x) == 0 && sgn(y - o.y) == 0;
-    }
-    bool operator!=(const Point<T> &o) const {
-        return !(*this == o);
-    }
-    friend ostream &operator<<(ostream &os, const Point<T> &p) {
+    bool operator==(const Point &p) const { return x == p.x && y == p.y; }
+    bool operator!=(const Point &p) const { return !(*this == p); }
+    friend ostream &operator<<(ostream &os, const Point &p) {
         return os << "(" << p.x << ", " << p.y << ")";
     }
-    friend istream &operator>>(istream &is, Point<T> &p) {
-        is >> p.x >> p.y;
-        return is;
+    friend istream &operator>>(istream &is, Point &p) {
+        return is >> p.x >> p.y;
     }
 };
 
 template <class T>
 struct Line {
-    Point<T> a;
-    Point<T> b;
-    Line(const Point<T> &a_ = Point<T>(), const Point<T> &b_ = Point<T>()): a(a_), b(b_) {}
+    Point<T> a, b;
+    // 用两点表示直线 / 线段；有向直线的方向为 a -> b。
+    Line(const Point<T> &a = {}, const Point<T> &b = {}) : a(a), b(b) {}
 };
 
-// 点积
+// 将坐标转为浮点类型 F，便于进行实数除法和几何构造。
+template <class T>
+Point<F> toFloat(const Point<T> &p) { return {F(p.x), F(p.y)}; }
+// 两点判等：整数精确比较，浮点逐坐标使用 eps；不能用作排序比较器。
+template <class T>
+bool samePoint(const Point<T> &a, const Point<T> &b) {
+    return sgn(a.x - b.x) == 0 && sgn(a.y - b.y) == 0;
+}
+// 向量点积 a·b，可用于判断夹角、计算投影。
 template <class T>
 T dot(const Point<T> &a, const Point<T> &b) {
     return a.x * b.x + a.y * b.y;
 }
-
-// 叉积
+// 向量叉积 a×b；正数表示 b 在 a 的逆时针一侧。
 template <class T>
 T cross(const Point<T> &a, const Point<T> &b) {
     return a.x * b.y - a.y * b.x;
 }
-
-// 向量长度平方
+// 三点叉积：(b-a) × (c-a)，正数表示逆时针。
 template <class T>
-T square(const Point<T> &p) {
-    return dot(p, p);
+T cross(const Point<T> &a, const Point<T> &b, const Point<T> &c) {
+    return cross(b - a, c - a);
 }
-
-// 向量长度
+// 向量长度的平方，比较距离时可避免开方。
 template <class T>
-F length(const Point<T> &p) {
-    return hypot<F>(p.x, p.y);
-}
-
-// 线段距离
+T square(const Point<T> &p) { return dot(p, p); }
+// 向量的欧几里得长度。
 template <class T>
-F length(const Line<T> &l) {
-    return length(l.a - l.b);
-}
-
-// 判断是否平行
+F length(const Point<T> &p) { return hypot(F(p.x), F(p.y)); }
+// 两点间的欧几里得距离。
 template <class T>
-bool parallel(const Line<T> &l1, const Line<T> &l2) {
-    return sgn(cross(l1.a - l1.b, l2.a - l2.b)) == 0;
+F distance(const Point<T> &a, const Point<T> &b) {
+    return length(toFloat(b) - toFloat(a));
 }
-
-// 单位化向量
+// 线段长度，即两个端点的距离。
+template <class T>
+F length(const Line<T> &l) { return distance(l.a, l.b); }
+// 返回同方向的单位向量；调用者须保证向量非零。
 template <class T>
 Point<F> normalize(const Point<T> &p) {
     F len = length(p);
-    return Point{p.x / len, p.y / len};
+    assert(len > 0);
+    return toFloat(p) / len;
 }
-
-// 两点间距离
+// 向量逆时针旋转 90°，保持原坐标类型。
 template <class T>
-F distance(const Point<T> &a, const Point<T> &b) {
-    return length(b - a);
-}
-
-// 点到直线最短距离
-template <class T>
-F distancePL(const Point<T> &p, const Line<T> &l) {
-    return abs(cross(l.a - p, l.b - p)) / length(l);
-}
-
-// 点到线段最短距离
-template <class T>
-F distancePS(const Point<T> &p, const Line<T> &l) {
-    if (dot(p - l.a, l.b - l.a) < 0) {
-        return distance(p, l.a);
-    }
-    if (dot(p - l.b, l.a - l.b) < 0) {
-        return distance(p, l.b);
-    }
-    return distancePL(p, l);
-}
-
-// 向量逆时针旋转
+Point<T> rotate90(const Point<T> &p) { return {-p.y, p.x}; }
+// 逆时针旋转 ang 弧度。
 template <class T>
 Point<F> rotate(const Point<T> &p, F ang) {
-    F s = sin(ang);
-    F c = cos(ang);
-    return Point{p.x * c - p.y * s, p.x * s + p.y * c};
+    F s = sin(ang), c = cos(ang);
+    return {p.x * c - p.y * s, p.x * s + p.y * c};
 }
-
-// 计算两条直线交点
-template<class T> 
-Point<F> lineIntersection(const Line<T> &l1, const Line<T> &l2) { 
-    F t = 1.L * cross(l2.b - l2.a, l1.a - l2.a) / cross(l2.b - l2.a, l1.a - l1.b);
-    auto p = l1.b - l1.a;
-    return Point{l1.a.x + p.x * t, l1.a.y + p.y * t};
-}
-
-// 凸包(仅支持整数)
+// 两个非零向量的夹角，[0, pi]。
 template <class T>
-auto getHull(vector<Point<T>> ps) {
-    sort(ps.begin(), ps.end(), [&](const auto &p1, const auto &p2) {
-        return p1.x == p2.x ? p1.y < p2.y : p1.x < p2.x;
-    });
-    vector<Point<T>> hi, lo;
-    for (auto &p : ps) {
-        while (lo.size() > 1 && cross(lo.back() - lo[lo.size() - 2], p - lo.back()) <= 0) {
-            lo.pop_back();
-        }
-        lo.push_back(p);
-
-        while (hi.size() > 1 && cross(hi.back() - hi[hi.size() - 2], p - hi.back()) >= 0) {
-            hi.pop_back();
-        }
-        hi.push_back(p);
-    }
-
-    return make_pair(lo, hi);
+F angle(const Point<T> &a, const Point<T> &b) {
+    auto u = normalize(a), v = normalize(b);
+    return atan2(fabs(cross(u, v)), dot(u, v));
 }
-
-// 判断点是否在直线左侧
-template<class T>
+// 判断两条直线是否平行（含重合）；两条直线均须端点不同。
+template <class T>
+bool parallel(const Line<T> &a, const Line<T> &b) {
+    return sgn(cross(a.b - a.a, b.b - b.a)) == 0;
+}
+// 判断点是否严格在有向直线 a -> b 左侧，在线上返回 false；要求 a != b。
+template <class T>
 bool pointOnLineLeft(const Point<T> &p, const Line<T> &l) {
-    return cross(l.b - l.a, p - l.a) > 0;
+    return sgn(cross(l.a, l.b, p)) > 0;
 }
-
-// 判断点是否在线段上(仅支持整数)
-template<class T>
+// 判断点是否在线段上，包含端点；允许线段退化为点。
+template <class T>
 bool pointOnSegment(const Point<T> &p, const Line<T> &l) {
-    return cross(p - l.a, l.b - l.a) == 0 && min(l.a.x, l.b.x) <= p.x && p.x <= max(l.a.x, l.b.x)
-        && min(l.a.y, l.b.y) <= p.y && p.y <= max(l.a.y, l.b.y);
+    return sgn(cross(l.a, l.b, p)) == 0
+        && sgn(p.x - min(l.a.x, l.b.x)) >= 0
+        && sgn(p.x - max(l.a.x, l.b.x)) <= 0
+        && sgn(p.y - min(l.a.y, l.b.y)) >= 0
+        && sgn(p.y - max(l.a.y, l.b.y)) <= 0;
 }
-
-// 判断点是否在多边形内部(仅支持整数)
-template<class T>
-bool pointInPolygon(const Point<T> &a, const vector<Point<T>> &p) {
+// 判断两线段是否相交，含端点接触、共线重叠及退化线段。
+// strict=true 仅判断两段内部的非共线交叉。
+template <class T>
+bool segmentIntersection(const Line<T> &a, const Line<T> &b, bool strict = false) {
+    int x = sgn(cross(a.a, a.b, b.a)), y = sgn(cross(a.a, a.b, b.b));
+    int u = sgn(cross(b.a, b.b, a.a)), v = sgn(cross(b.a, b.b, a.b));
+    if (x * y < 0 && u * v < 0) {
+        return true;
+    }
+    return !strict && (pointOnSegment(a.a, b) || pointOnSegment(a.b, b)
+                   || pointOnSegment(b.a, a) || pointOnSegment(b.b, a));
+}
+// 唯一直线交点；先检查非平行，平行/重合/退化直线不能调用。
+template <class T>
+Point<F> lineIntersection(const Line<T> &a, const Line<T> &b) {
+    auto u = a.b - a.a, v = b.b - b.a;
+    auto d = cross(u, v);
+    assert(sgn(d) != 0);
+    F t = F(cross(b.a - a.a, v)) / F(d);
+    return toFloat(a.a) + toFloat(u) * t;
+}
+// 点在直线上的投影；若 a=b，约定投影为 a。
+template <class T>
+Point<F> projection(const Point<T> &p, const Line<T> &l) {
+    auto a = toFloat(l.a), v = toFloat(l.b) - a;
+    F d = square(v);
+    if (d == 0) {
+        return a;
+    }
+    return a + v * (dot(toFloat(p) - a, v) / d);
+}
+// 点关于直线的对称点；若 a=b，则返回关于点 a 的中心对称点。
+template <class T>
+Point<F> reflection(const Point<T> &p, const Line<T> &l) {
+    return projection(p, l) * 2 - toFloat(p);
+}
+// 点到直线的最短距离；退化直线按点处理。
+template <class T>
+F distancePL(const Point<T> &p, const Line<T> &l) {
+    return length(toFloat(p) - projection(p, l));
+}
+// 点到线段的最短距离；垂足越界时取端点，允许退化为点。
+template <class T>
+F distancePS(const Point<T> &p, const Line<T> &l) {
+    auto a = toFloat(l.a), v = toFloat(l.b) - a, u = toFloat(p) - a;
+    F d = square(v);
+    if (d == 0) {
+        return length(u);
+    }
+    F t = clamp(dot(u, v) / d, F(0), F(1));
+    return length(u - v * t);
+}
+// 两线段的最短距离，相交时为 0；允许退化为点。
+template <class T>
+F distanceSS(const Line<T> &a, const Line<T> &b) {
+    if (segmentIntersection(a, b)) {
+        return 0;
+    }
+    return min({distancePS(a.a, b), distancePS(a.b, b),
+                distancePS(b.a, a), distancePS(b.b, a)});
+}
+// 多边形顶点按边界顺序给出，不重复首点；有向面积的两倍，逆时针为正。
+template <class T>
+T area2(const vector<Point<T>> &p) {
+    T ans = 0;
+    for (int i = 1; i + 1 < int(p.size()); i++) {
+        ans += cross(p[0], p[i], p[i + 1]);
+    }
+    return ans;
+}
+// 简单多边形的非负面积，O(n)；不足三个点时为 0。
+template <class T>
+F area(const vector<Point<T>> &p) { return fabs(F(area2(p))) / 2; }
+// 闭合多边形的周长，O(n)；两点时为线段长度的两倍，空集/单点为 0。
+template <class T>
+F perimeter(const vector<Point<T>> &p) {
+    F ans = 0;
     int n = p.size();
     for (int i = 0; i < n; i++) {
-        if (pointOnSegment(a, Line(p[i], p[(i + 1) % n]))) {
-            return true;
-        }
+        ans += distance(p[i], p[(i + 1) % n]);
     }
-     
-    int t = 0;
-    for (int i = 0; i < n; i++) {
-        auto u = p[i];
-        auto v = p[(i + 1) % n];
-        if (u.x < a.x && v.x >= a.x && pointOnLineLeft(a, Line(v, u))) {
-            t ^= 1;
-        }
-        if (u.x >= a.x && v.x < a.x && pointOnLineLeft(a, Line(u, v))) {
-            t ^= 1;
-        }
-    }
-     
-    return t == 1;
+    return ans;
 }
+// 判断点与简单多边形的位置关系，顺/逆时针均可，O(n)。
+// 返回 -1 外部、0 边界、1 内部；空多边形返回 -1。
+template <class T>
+int pointPolygonRelation(const Point<T> &a, const vector<Point<T>> &p) {
+    int n = p.size(), wn = 0;
+    for (int i = 0; i < n; i++) {
+        auto u = p[i], v = p[(i + 1) % n];
+        if (pointOnSegment(a, Line<T>(u, v))) {
+            return 0;
+        }
+        int x = sgn(u.y - a.y), y = sgn(v.y - a.y);
+        int z = sgn(cross(u, v, a));
+        if (x <= 0 && y > 0 && z > 0) {
+            wn++;
+        }
+        if (y <= 0 && x > 0 && z < 0) {
+            wn--;
+        }
+    }
+    return wn ? 1 : -1;
+}
+// 判断点是否在简单多边形内，包含边界，O(n)。
+template <class T>
+bool pointInPolygon(const Point<T> &a, const vector<Point<T>> &p) {
+    return pointPolygonRelation(a, p) >= 0;
+}
+// 构造凸包的上下凸链，O(n log n)；返回 {下凸链, 上凸链}，均从左到右。
+// 精确去重，去掉边上共线中间点；整数精确判定，浮点使用 eps。
+template <class T>
+auto getHull(vector<Point<T>> ps) {
+    sort(ps.begin(), ps.end());
+    ps.erase(unique(ps.begin(), ps.end()), ps.end());
+    vector<Point<T>> lo, hi;
+    for (auto p : ps) {
+        while (lo.size() > 1
+            && sgn(cross(lo[lo.size() - 2], lo.back(), p)) <= 0) {
+            lo.pop_back();
+        }
+        while (hi.size() > 1
+            && sgn(cross(hi[hi.size() - 2], hi.back(), p)) >= 0) {
+            hi.pop_back();
+        }
+        lo.push_back(p);
+        hi.push_back(p);
+    }
+    return make_pair(lo, hi);
+}
+// 构造完整凸包，O(n log n)，逆时针且不重复首点。
+// 空集返回空，单个不同点只返回一个。
+// 全共线时仅保留两端点。
+template <class T>
+vector<Point<T>> convexHull(vector<Point<T>> ps) {
+    auto [lo, hi] = getHull(move(ps));
+    for (int i = int(hi.size()) - 2; i > 0; i--) {
+        lo.push_back(hi[i]);
+    }
+    return lo;
+}
+// 旋转卡壳求直径平方，O(n)；输入必须是 convexHull 返回的凸包。
+template <class T>
+T convexDiameter2(const vector<Point<T>> &p) {
+    int n = p.size();
+    if (n < 2) {
+        return 0;
+    }
+    if (n == 2) {
+        return square(p[0] - p[1]);
+    }
+    T ans = 0;
+    for (int i = 0, j = 1; i < n; i++) {
+        int k = (i + 1) % n;
+        while (cross(p[i], p[k], p[(j + 1) % n]) > cross(p[i], p[k], p[j])) {
+            j = (j + 1) % n;
+        }
+        ans = max({ans, square(p[i] - p[j]), square(p[k] - p[j])});
+    }
+    return ans;
+}
+
+// using P = Point<i64>; vector<P> ps = {{0, 0}, {2, 0}, {0, 2}};
+// auto hull = convexHull(ps);
+// cout << area(hull) << ' ' << sqrt(F(convexDiameter2(hull))); // 2, sqrt(8)
+// pointPolygonRelation(P(1, 1), hull) == 0；pointInPolygon 包含边界。
+// Point 的 == 改为精确相等；浮点近似判等用 samePoint(a, b)。
 ```
 
 <a id="module-e695b0e5ada62f4c756361732e637070"></a>
@@ -2662,91 +3389,117 @@ T power(T a, i64 b) {
 ### Pollard-Rho
 
 ```cpp
+// GNU C++17；需 i64 = long long，i128 = __int128。
+// factorize(n)：1 <= n < 2^63，升序返回质因子（含重复）。
+// n = 1 返回空数组；例：360 -> {2, 2, 2, 3, 3, 5}。
+// isprime(n)：确定性判素，O(log n)；n < 2 返回 false。
+// 分解：启发式期望 O(n^(1/4))，忽略对数因子；空间 O(log n)。
 i64 mul(i64 a, i64 b, i64 m) {
-    return static_cast<__int128>(a) * b % m;
+    return i128(a) * b % m;
 }
+
 i64 power(i64 a, i64 b, i64 m) {
     i64 res = 1 % m;
-    for (; b; b >>= 1, a = mul(a, a, m))
-        if (b & 1)
+    for (; b; b >>= 1, a = mul(a, a, m)) {
+        if (b & 1) {
             res = mul(res, a, m);
+        }
+    }
     return res;
 }
+
 bool isprime(i64 n) {
-    if (n < 2)
-        return false;
-    static constexpr int A[] = {2, 3, 5, 7, 11, 13, 17, 19, 23};
+    if (n < 2 || n % 2 == 0) {
+        return n == 2;
+    }
+    // 这组底数覆盖全部 64 位整数，不要随意删减。
+    static constexpr i64 A[] = {
+        2, 325, 9375, 28178, 450775, 9780504, 1795265022
+    };
     int s = __builtin_ctzll(n - 1);
-    i64 d = (n - 1) >> s;
+    i64 d = (n - 1) >> s; // n - 1 = d * 2^s，d 为奇数。
     for (auto a : A) {
-        if (a == n)
-            return true;
-        i64 x = power(a, d, n);
-        if (x == 1 || x == n - 1)
+        if (a % n == 0) {
             continue;
-        bool ok = false;
-        for (int i = 0; i < s - 1; ++i) {
-            x = mul(x, x, n);
-            if (x == n - 1) {
-                ok = true;
-                break;
-            }
         }
-        if (!ok)
+        i64 x = power(a % n, d, n);
+        if (x == 1 || x == n - 1) {
+            continue;
+        }
+        for (int i = 1; i < s && x != n - 1; i++) {
+            x = mul(x, x, n);
+        }
+        if (x != n - 1) {
             return false;
+        }
     }
     return true;
 }
-vector<i64> factorize(i64 n) {
+
+// 仅对合数调用，返回任意非平凡因子（不一定是质数）。
+i64 rho(i64 n) {
+    if (n % 2 == 0) {
+        return 2;
+    }
+    static mt19937_64 rng(
+        chrono::steady_clock::now().time_since_epoch().count());
+    while (true) {
+        i64 c = rng() % (n - 1) + 1;
+        i64 y = rng() % (n - 1) + 1;
+        auto g = [&](i64 x) -> i64 {
+            return (i128(x) * x + c) % n; // 加法也需防溢出。
+        };
+        i64 x = 0, z = 0, d = 1;
+        // Brent 倍增：固定 x，分段推进 y，每 128 步批量求 gcd。
+        for (i64 len = 1; d == 1; len *= 2) {
+            x = y;
+            for (i64 k = 0; k < len && d == 1; k += 128) {
+                z = y;
+                i64 v = 1;
+                for (i64 i = 0; i < min(128LL, len - k); i++) {
+                    y = g(y);
+                    v = mul(v, abs(x - y), n);
+                }
+                d = gcd(v, n);
+            }
+        }
+        if (d == n) { // 批量乘积丢失信息，回到本块起点逐步检查。
+            do {
+                z = g(z);
+                d = gcd(abs(x - z), n);
+            } while (d == 1);
+        }
+        if (d < n) {
+            return d;
+        }
+        // 仍失败则重新随机起点和常数 c。
+    }
+}
+
+vector<i64> factorize(i64 x) {
+    assert(x >= 1);
     vector<i64> p;
-    function<void(i64)> f = [&](i64 n) {
-        if (n <= 10000) {
-            for (int i = 2; i * i <= n; ++i)
-                for (; n % i == 0; n /= i)
+    auto dfs = [&](auto &&self, i64 n) -> void {
+        if (n <= 10000) { // 小数直接试除。
+            for (int i = 2; i * i <= n; i++) {
+                for (; n % i == 0; n /= i) {
                     p.push_back(i);
-            if (n > 1)
+                }
+            }
+            if (n > 1) {
                 p.push_back(n);
+            }
             return;
         }
         if (isprime(n)) {
             p.push_back(n);
             return;
         }
-        auto g = [&](i64 x) {
-            return (mul(x, x, n) + 1) % n;
-        };
-        i64 x0 = 2;
-        while (true) {
-            i64 x = x0;
-            i64 y = x0;
-            i64 d = 1;
-            i64 power = 1, lam = 0;
-            i64 v = 1;
-            while (d == 1) {
-                y = g(y);
-                ++lam;
-                v = mul(v, abs(x - y), n);
-                if (lam % 127 == 0) {
-                    d = gcd(v, n);
-                    v = 1;
-                }
-                if (power == lam) {
-                    x = y;
-                    power *= 2;
-                    lam = 0;
-                    d = gcd(v, n);
-                    v = 1;
-                }
-            }
-            if (d != n) {
-                f(d);
-                f(n / d);
-                return;
-            }
-            ++x0;
-        }
+        i64 d = rho(n);
+        self(self, d);
+        self(self, n / d);
     };
-    f(n);
+    dfs(dfs, x);
     sort(p.begin(), p.end());
     return p;
 }
@@ -2757,287 +3510,315 @@ vector<i64> factorize(i64 n) {
 ### Polynomial
 
 ```cpp
-constexpr i64 mod = 998244353;
-constexpr i64 G = 3;
+// GNU C++17；先粘贴短版 MInt，要求 mod = 998244353、Z = MInt<mod>。
+// a[i] 为 x^i 的系数；Poly(n) 建 n 项，Poly{c} 建常数 c。
+// cut / inv / log / exp / pow / sqrt 的 n 均为项数，结果恰好 n 项。
+// n = 0 返回空；缺少的系数视为 0；trim() 删除末尾零，零多项式为空。
+// NTT 长度至多 2^23；乘法要求 a.size() + b.size() - 1 <= 2^23。
+// 各次内部乘法也受此限制；幂级数操作取 n <= 2^22 是安全上界。
+// 求导、积分 O(n)；乘法、求逆、log、exp、pow、sqrt、除法 O(n log n)。
+// pow 另有 O(log k)，sqrt 另有 O(log^2 mod)；空间 O(n)。
+static_assert(mod == 998244353);
 
-i64 power(i64 a, i64 b = mod - 2) {
-    i64 res = 1;
-    while (b) {
-        if (b & 1) {
-            res = res * a % mod;
-        }
-        a = a * a % mod;
-        b >>= 1;
+struct Poly : vector<Z> {
+    using vector<Z>::vector;
+
+    // 取前 n 项，不足补 0；等价于模 x^n，并保证结果长度为 n。
+    Poly cut(int n) const {
+        assert(n >= 0);
+        Poly a(begin(), begin() + min(n, int(size())));
+        a.resize(n);
+        return a;
     }
-    return res;
-}
-
-template<i64 mod, i64 G>
-struct PolyNTT {
-    // NTT 整数模意义下的多项式乘法
-    static void ntt(vector<i64>& a, bool invert) {
-        int n = a.size();
-        vector<int> rev(n);
-        for (int i = 0; i < n; i++) {
-            rev[i] = (rev[i >> 1] >> 1) | ((i & 1) ? (n >> 1) : 0);
-            if (i < rev[i]) swap(a[i], a[rev[i]]);
+    // 原地删除高次项末尾的 0；之后 size()-1 为次数，空数组表示零。
+    void trim() {
+        while (!empty() && back() == 0) {
+            pop_back();
         }
-        for (int len = 2; len <= n; len <<= 1) {
-            i64 wlen = power(G, (mod - 1) / len);
-            if (invert) wlen = power(wlen);
+    }
+    // 逐项相加，结果长度取两者最大值，不删除末尾零。
+    friend Poly operator+(Poly a, const Poly &b) {
+        a.resize(max(a.size(), b.size()));
+        for (int i = 0; i < int(b.size()); i++) {
+            a[i] += b[i];
+        }
+        return a;
+    }
+    // 逐项相减，结果长度取两者最大值，不删除末尾零。
+    friend Poly operator-(Poly a, const Poly &b) {
+        a.resize(max(a.size(), b.size()));
+        for (int i = 0; i < int(b.size()); i++) {
+            a[i] -= b[i];
+        }
+        return a;
+    }
+    // 多项式乘常数：每个系数乘 c，长度不变。
+    friend Poly operator*(Poly a, Z c) {
+        for (auto &x : a) {
+            x *= c;
+        }
+        return a;
+    }
+    // 常数乘多项式，与 a * c 等价。
+    friend Poly operator*(Z c, Poly a) { return a * c; }
+
+    // 原地 NTT，invert=false 为正变换，true 为逆变换；长度须为 2 的幂。
+    // 逆变换用正变换后反转下标 1..n-1，再乘 n 的逆元实现。
+    static void ntt(Poly &a, bool invert) {
+        int n = a.size();
+        assert(n > 0 && (n & (n - 1)) == 0 && n <= (1 << 23));
+        for (int i = 1, j = 0; i < n; i++) {
+            int k = n >> 1;
+            for (; j & k; k >>= 1) {
+                j ^= k;
+            }
+            j ^= k;
+            if (i < j) {
+                std::swap(a[i], a[j]);
+            }
+        }
+        for (int len = 2; len <= n; len *= 2) {
+            Z step = power(Z(3), (mod - 1) / len);
             for (int i = 0; i < n; i += len) {
-                i64 w = 1;
-                for (int j = 0; j < len / 2; j++) {
-                    i64 u = a[i + j];
-                    i64 v = a[i + j + len / 2] * w % mod;
-                    a[i + j] = (u + v) % mod;
-                    a[i + j + len / 2] = (u - v + mod) % mod;
-                    w = w * wlen % mod;
+                Z w = 1;
+                for (int j = 0; j < len / 2; j++, w *= step) {
+                    Z u = a[i + j], v = a[i + j + len / 2] * w;
+                    a[i + j] = u + v;
+                    a[i + j + len / 2] = u - v;
                 }
             }
         }
         if (invert) {
-            i64 inv_n = power(n);
-            for (i64 &x : a) x = x * inv_n % mod;
-        }
-    }
- 
-    // FFT 通用多项式乘法 (实现为 NTT)
-    static void fft(vector<i64>& a, bool invert) {
-        ntt(a, invert);
-    }
-
-    // FWT 子集卷积 / 集合运算
-    static void fwt(vector<i64>& a, bool invert) {
-        int n = a.size();
-        for (int len = 1; len < n; len <<= 1) {
-            for (int i = 0; i < n; i++) {
-                if (i & len) continue;
-                i64 x = a[i], y = a[i + len];
-                if (invert) {
-                    // IFWT for XOR
-                    a[i] = (x + y) % mod * power(2) % mod;
-                    a[i + len] = (x - y + mod) % mod * power(2) % mod;
-                } else {
-                    // FWT for XOR
-                    a[i] = (x + y) % mod;
-                    a[i + len] = (x - y + mod) % mod;
-                }
+            reverse(a.begin() + 1, a.end());
+            Z invn = Z(n).inv();
+            for (auto &x : a) {
+                x *= invn;
             }
         }
     }
- 
-    // 多项式加法
-    static vector<i64> add(vector<i64> a, vector<i64> b) {
-        int n = max(a.size(), b.size());
-        a.resize(n);
-        b.resize(n);
-        for (int i = 0; i < n; i++) {
-            a[i] = (a[i] + b[i]) % mod;
+    // 完整卷积：c[k] = sum(a[i]*b[k-i])，非空时长度为 |a|+|b|-1。
+    // 任一为空则返回空；保留前 n 项可写 (a*b).cut(n)。
+    friend Poly operator*(Poly a, Poly b) {
+        if (a.empty() || b.empty()) {
+            return {};
         }
-        return a;
-    }
- 
-    // 多项式减法
-    static vector<i64> sub(vector<i64> a, vector<i64> b) {
-        int n = max(a.size(), b.size());
-        a.resize(n);
-        b.resize(n);
-        for (int i = 0; i < n; i++) {
-            a[i] = (a[i] - b[i] + mod) % mod;
+        int n = int(a.size() + b.size()) - 1;
+        assert(n <= (1 << 23));
+        if (min(a.size(), b.size()) <= 32) { // 小规模直接卷积。
+            Poly c(n);
+            for (int i = 0; i < int(a.size()); i++) {
+                for (int j = 0; j < int(b.size()); j++) {
+                    c[i + j] += a[i] * b[j];
+                }
+            }
+            return c;
         }
-        return a;
-    }
- 
-    // 多项式乘法
-    static vector<i64> multiply(vector<i64> a, vector<i64> b) {
-        if (a.empty() || b.empty()) return {};
-        int res_deg = (int)a.size() + (int)b.size() - 2;
-        int sz = 1;
-        while (sz < (int)a.size() + (int)b.size()) sz <<= 1;
-        a.resize(sz);
-        b.resize(sz);
+        int m = 1;
+        while (m < n) {
+            m *= 2;
+        }
+        a.resize(m);
+        b.resize(m);
         ntt(a, false);
         ntt(b, false);
-        for (int i = 0; i < sz; i++) a[i] = a[i] * b[i] % mod;
+        for (int i = 0; i < m; i++) {
+            a[i] *= b[i];
+        }
         ntt(a, true);
-        a.resize(res_deg + 1);
+        a.resize(n);
         return a;
     }
- 
-    // 多项式除法（返回商）
-    static vector<i64> divide(const vector<i64>& a, const vector<i64>& b) {
-        int n = a.size(), m = b.size();
-        if (n < m) return {0};
-        vector<i64> ra = a;
-        vector<i64> rb = b;
-        reverse(ra.begin(), ra.end());
-        reverse(rb.begin(), rb.end());
-        vector<i64> rb_inv;
-        poly_inv(rb, rb_inv, n - m + 1);
-        vector<i64> q = multiply(ra, rb_inv);
-        q.resize(n - m + 1);
-        reverse(q.begin(), q.end());
-        return q;
-    }
- 
-    // 多项式模除（返回余数）
-    static vector<i64> Mod(const vector<i64>& a, const vector<i64>& b) {
-        if (a.size() < b.size()) return a;
-        vector<i64> q = divide(a, b);
-        vector<i64> r = sub(a, multiply(q, b));
-        r.resize(min((int)r.size(), (int)b.size() - 1));
-        return r;
-    }
- 
-    // 多项式取逆，递归构造
-    static void poly_inv(const vector<i64>& a, vector<i64>& b, int deg) {
-        if (deg == 1) {
-            b.assign(1, power(a[0]));
-            return;
+
+    // 求导：b[i-1] = i*a[i]；非空时长度减 1，常数与零的导数为空。
+    Poly deriv() const {
+        int n = size();
+        Poly b(max(0, n - 1));
+        for (int i = 1; i < n; i++) {
+            b[i - 1] = (*this)[i] * i;
         }
-        poly_inv(a, b, (deg + 1) / 2);
-        int sz = 1;
-        while (sz < 2 * deg) sz <<= 1;
-        vector<i64> a_slice(a.begin(), a.begin() + min((int)a.size(), deg));
-        a_slice.resize(sz);
-        b.resize(sz);
-        ntt(a_slice, false);
-        ntt(b, false);
-        for (int i = 0; i < sz; i++) {
-            b[i] = (2 * b[i] - a_slice[i] * b[i] % mod * b[i] % mod + mod) % mod;
+        return b;
+    }
+    // 积分：b[i+1] = a[i]/(i+1)，b[0]=0；长度加 1，要求 size()<mod。
+    Poly integr() const {
+        int n = size();
+        assert(n < mod);
+        static vector<Z> inv{0, 1};
+        for (int i = inv.size(); i <= n; i++) {
+            inv.push_back(-Z(mod / i) * inv[mod % i]);
         }
-        ntt(b, true);
-        b.resize(deg);
-    }
- 
-    // 多项式求导
-    static vector<i64> derivative(const vector<i64>& a) {
-        int n = a.size();
-        if (n <= 1) return {};
-        vector<i64> res(n - 1);
-        for (int i = 1; i < n; i++) res[i - 1] = a[i] * i % mod;
-        return res;
-    }
- 
-    // 多项式积分
-    static vector<i64> integral(const vector<i64>& a) {
-        int n = a.size();
-        vector<i64> res(n + 1);
-        vector<i64> inv(n + 2);
-        inv[1] = 1;
-        for (int i = 2; i <= n + 1; i++) inv[i] = mod - (mod / i) * inv[mod % i] % mod;
-        for (int i = 0; i < n; i++) res[i + 1] = a[i] * inv[i + 1] % mod;
-        return res;
-    }
- 
-    // 多项式对数
-    static void ln(const vector<i64>& a, vector<i64>& b, int deg) {
-        vector<i64> a_der = derivative(a);
-        vector<i64> a_inv;
-        poly_inv(a, a_inv, deg);
-        vector<i64> t = multiply(a_der, a_inv);
-        t.resize(deg - 1);
-        b = integral(t);
-        b.resize(deg);
-    }
- 
-    // 多项式指数
-    static void exp(const vector<i64>& a, vector<i64>& b, int deg) {
-        if (deg == 1) {
-            b.assign(1, 1);
-            return;
-        }
-        exp(a, b, (deg + 1) / 2);
-        b.resize(deg);
-        vector<i64> ln_b;
-        ln(b, ln_b, deg);
-        vector<i64> a_slice(a.begin(), a.begin() + min((int)a.size(), deg));
-        a_slice.resize(deg, 0);
-        for (int i = 0; i < deg; i++) {
-            ln_b[i] = (a_slice[i] - ln_b[i] + mod) % mod;
-        }
-        ln_b[0] = (ln_b[0] + 1) % mod;
-        b = multiply(b, ln_b);
-        b.resize(deg);
-    }
- 
-    // 多点求值
-    static void build_eval_tree(vector<vector<i64>>& tree, const vector<i64>& xs, int u, int l, int r) {
-        if (r - l == 1) {
-            tree[u] = {(mod - xs[l]) % mod, 1};
-        } else {
-            int m = (l + r) / 2;
-            build_eval_tree(tree, xs, 2 * u, l, m);
-            build_eval_tree(tree, xs, 2 * u + 1, m, r);
-            tree[u] = multiply(tree[2 * u], tree[2 * u + 1]);
-        }
-    }
- 
-    static void fast_eval_rec(const vector<i64>& f, const vector<vector<i64>>& tree, vector<i64>& res, int u, int l, int r) {
-        if (f.size() < 256) { // 小范围暴力求值优化
-            for (int i = l; i < r; ++i) {
-                i64 x = res[i];
-                i64 y = 0, p = 1;
-                for (i64 coeff : f) {
-                    y = (y + coeff * p) % mod;
-                    p = p * x % mod;
-                }
-                res[i] = y;
-            }
-            return;
-        }
-        if (r - l == 1) {
-            res[l] = f.size() ? f[0] : 0;
-            return;
-        }
-        int m = (l + r) / 2;
-        vector<i64> rem_l = Mod(f, tree[2 * u]);
-        vector<i64> rem_r = Mod(f, tree[2 * u + 1]);
-        fast_eval_rec(rem_l, tree, res, 2 * u, l, m);
-        fast_eval_rec(rem_r, tree, res, 2 * u + 1, m, r);
-    }
- 
-    static vector<i64> fast_eval(const vector<i64>& f, const vector<i64>& xs) {
-        int n = xs.size();
-        if (n == 0) return {};
-        vector<vector<i64>> tree(4 * n);
-        build_eval_tree(tree, xs, 1, 0, n);
-        vector<i64> res = xs;
-        fast_eval_rec(f, tree, res, 1, 0, n);
-        return res;
-    }
- 
-    // 快速插值
-    static vector<i64> interpolate(const vector<i64>& xs, const vector<i64>& ys) {
-        int n = xs.size();
-        if (n == 0) return {};
-        vector<vector<i64>> tree(4 * n);
-        build_eval_tree(tree, xs, 1, 0, n);
-        vector<i64> all_poly = tree[1];
-        vector<i64> der = derivative(all_poly);
-        vector<i64> val = fast_eval(der, xs);
-        vector<i64> weights(n);
+        Poly b(n + 1);
         for (int i = 0; i < n; i++) {
-            weights[i] = ys[i] * power(val[i]) % mod;
+            b[i + 1] = (*this)[i] * inv[i + 1];
         }
- 
-        function<vector<i64>(int, int, int)> solve = [&](int u, int l, int r) -> vector<i64> {
-            if (r - l == 1) {
-                return {weights[l]};
+        return b;
+    }
+    // 幂级数求逆：返回 B，使 A*B = 1 (mod x^n)；n>0 时要求 a[0]!=0。
+    Poly inv(int n) const {
+        assert(n >= 0);
+        if (n == 0) {
+            return {};
+        }
+        assert(!empty() && (*this)[0] != 0);
+        Poly b{(*this)[0].inv()};
+        for (int m = 1; m < n; m *= 2) {
+            int k = min(2 * m, n);
+            Poly c = (cut(k) * b).cut(k) * Z(-1);
+            c[0] += 2;
+            b = (b * c).cut(k); // B <- B * (2 - A * B)。
+        }
+        return b;
+    }
+    // 返回 log A 的前 n 项；n>0 时要求 a[0]=1，结果常数项为 0。
+    // 公式：log A = integral(A'/A)。
+    Poly log(int n) const {
+        assert(n >= 0);
+        if (n == 0) {
+            return {};
+        }
+        assert(!empty() && (*this)[0] == 1);
+        return (cut(n).deriv() * inv(n)).cut(n - 1).integr();
+    }
+    // 返回 exp A 的前 n 项；n>0 时要求 a[0]=0，结果常数项为 1。
+    // 空数组视为零多项式，可直接调用。
+    Poly exp(int n) const {
+        assert(n >= 0);
+        if (n == 0) {
+            return {};
+        }
+        assert(empty() || (*this)[0] == 0);
+        Poly b{1};
+        for (int m = 1; m < n; m *= 2) {
+            int k = min(2 * m, n);
+            Poly c = cut(k) - b.log(k);
+            c[0] += 1;
+            b = (b * c).cut(k); // B <- B * (1 + A - log B)。
+        }
+        return b;
+    }
+    // 返回 A^k 的前 n 项，k>=0；允许前导零和任意常数项。
+    // 约定 A^0=1，包括 0^0；指数 k 使用 i64，不要提前对 mod 取模。
+    Poly pow(i64 k, int n) const {
+        assert(k >= 0 && n >= 0);
+        if (n == 0) {
+            return {};
+        }
+        if (k == 0) {
+            return Poly{1}.cut(n);
+        }
+        int t = 0;
+        while (t < min(n, int(size())) && (*this)[t] == 0) {
+            t++;
+        }
+        if (t == min(n, int(size())) || (t && k > (n - 1) / t)) {
+            return Poly(n);
+        }
+        // A = x^t * c * B，B[0] = 1；先判断位移，避免 t*k 溢出。
+        int shift = t * k, m = n - shift;
+        Z c = (*this)[t];
+        Poly a(begin() + t, begin() + min(int(size()), t + m));
+        Poly b = ((a * c.inv()).log(m) * Z(k)).exp(m) * power(c, k);
+        b.insert(b.begin(), shift, Z(0));
+        return b;
+    }
+
+    // 求 r^2=a (mod mod)，无解返回 nullopt；有解取两个根中较小者。
+    // Tonelli-Shanks 算法，供幂级数开平方求首个非零系数的根。
+    static optional<Z> modSqrt(Z a) {
+        if (a == 0) {
+            return Z(0);
+        }
+        if (power(a, (mod - 1) / 2) != 1) {
+            return nullopt;
+        }
+        // mod - 1 = 119 * 2^23，3 是二次非剩余。
+        int s = 23;
+        Z c = power(Z(3), 119), x = power(a, 60), t = power(a, 119);
+        while (t != 1) {
+            int i = 0;
+            Z y = t;
+            while (y != 1) {
+                y *= y;
+                i++;
             }
-            int m = (l + r) / 2;
-            vector<i64> left = solve(2 * u, l, m);
-            vector<i64> right = solve(2 * u + 1, m, r);
-            return add(multiply(left, tree[2 * u + 1]), multiply(right, tree[2 * u]));
-        };
- 
-        return solve(1, 0, n);
+            Z b = power(c, 1LL << (s - i - 1));
+            x *= b;
+            c = b * b;
+            t *= c;
+            s = i;
+        }
+        return x.x <= (-x).x ? x : -x;
+    }
+    // 返回 n 项的 B，使 B^2=A (mod x^n)，无解返回 nullopt。
+    // 自动处理前导零；首个非零系数取较小模根，自由的高位补 0。
+    optional<Poly> sqrt(int n) const {
+        assert(n >= 0);
+        if (n == 0) {
+            return Poly{};
+        }
+        int t = 0;
+        while (t < min(n, int(size())) && (*this)[t] == 0) {
+            t++;
+        }
+        if (t == min(n, int(size()))) {
+            return Poly(n);
+        }
+        if (t & 1) {
+            return nullopt;
+        }
+        auto r = modSqrt((*this)[t]);
+        if (!r) {
+            return nullopt;
+        }
+        Poly a(begin() + t, begin() + min(n, int(size()))), b{*r};
+        int m = n - t;
+        for (int len = 1; len < m; len *= 2) {
+            int k = min(2 * len, m);
+            b = (b + (a.cut(k) * b.inv(k)).cut(k)) * Z((mod + 1) / 2);
+        }
+        b.insert(b.begin(), t / 2, Z(0));
+        b.resize(n);
+        return b;
+    }
+
+    // 多项式带余除法：返回 {Q,R}，使 A=Q*B+R 且 deg R<deg B。
+    // B 必须非零；允许输入有末尾零，返回的商与余数均 trim。
+    pair<Poly, Poly> divmod(Poly b) const {
+        Poly a = *this;
+        a.trim();
+        b.trim();
+        assert(!b.empty());
+        if (a.size() < b.size()) {
+            return {{}, a};
+        }
+        int n = int(a.size() - b.size()) + 1;
+        Poly ra(a.rbegin(), a.rend()), rb(b.rbegin(), b.rend());
+        Poly q = (ra.cut(n) * rb.inv(n)).cut(n);
+        reverse(q.begin(), q.end());
+        Poly r = (a - b * q).cut(int(b.size()) - 1);
+        q.trim();
+        r.trim();
+        return {q, r};
+    }
+    // 返回带余除法的商，b 必须非零；不是幂级数除法 a*b.inv(n)。
+    friend Poly operator/(const Poly &a, const Poly &b) {
+        return a.divmod(b).first;
+    }
+    // 返回带余除法的余数；若同时需要商和余数，只调用一次 divmod。
+    friend Poly operator%(const Poly &a, const Poly &b) {
+        return a.divmod(b).second;
     }
 };
 
-using Poly = PolyNTT<mod, G>;
-using poly = vector<i64>;
+/*
+Poly a = {1, 2, 3}, b = {1, 1};
+auto c = a * b;             // {1, 3, 5, 3}
+auto d = a.inv(4);          // {1, -2, 1, 4}，负数以模意义表示。
+auto e = a.log(4).exp(4);   // a.cut(4)
+auto f = a.pow(5, 10);      // a^5 的前 10 项。
+auto [q, r] = a.divmod(b);  // q = {-1, 3}，r = {2}。
+auto s = a.sqrt(4);         // optional<Poly>，先判断再取值。
+if (s) { auto root = *s; }  // root * root 的前 4 项等于 a.cut(4)。
+*/
 ```
 
 <a id="module-e695b0e5ada62f706f7765722e637070"></a>
@@ -3254,6 +4035,21 @@ binom(n, k+1) / binom(n, k)
 =
 (n-k)/(k+1)
 $
+```
+
+<a id="module-e695b0e5ada62fe695b0e8aebae58886e59d972e637070"></a>
+
+### 数论分块
+
+```cpp
+i64 floorSum(i64 n) {
+    i64 ans = 0;
+    for (i64 l = 1, r; l <= n; l = r + 1) {
+        r = n / (n / l);
+        ans += (r - l + 1) * (n / l);
+    }
+    return ans;
+}
 ```
 
 <a id="module-e695b0e5ada62fe8b79de7a6bbe4b88ee59d90e6a087e58f98e68da22e747970"></a>
@@ -3779,6 +4575,20 @@ g++ -std=c++20 -include "./include/pch.hpp" $1.cpp -o $1
 ./$1 < $1.in > $1.out
 
 cat $1.out
+```
+
+<a id="module-e585b6e4bb962f7370617273652e637070"></a>
+
+### sparse
+
+```cpp
+auto sp = a;
+sort(sp.begin() + 1, sp.end());
+sp.erase(unique(sp.begin() + 1, sp.end()), sp.end());
+
+auto get = [&](i64 x) -> int {
+    return lower_bound(sp.begin() + 1, sp.end(), x) - sp.begin();
+};
 ```
 
 <a id="module-e585b6e4bb962fe4bd8de8bf90e7ae97e5ba93e587bde695b02e747970"></a>
