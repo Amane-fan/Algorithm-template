@@ -3,13 +3,13 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-    static FastReader fr = new FastReader();
-    static PrintWriter pw = new PrintWriter(new OutputStreamWriter(System.out));
+    static FastReader rr = new FastReader();
+    static PrintWriter pr = new PrintWriter(new OutputStreamWriter(System.out));
     static StringBuilder sb = new StringBuilder();
 
     public static void main(String[] args) throws IOException {
 
-        pw.flush();
+        pr.flush();
     }
 
 }
